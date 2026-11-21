@@ -107,6 +107,16 @@ public final class Http {
      * @param path 请求路径（含查询串）
      */
     public static Response get(String host, String path) throws IOException {
+        return get(host, path, READ_TIMEOUT);
+    }
+
+    /**
+     * 带自定义读超时的 GET。
+     * <p>
+     * 少数接口响应很慢（站点的强制刷新要触发上游重新抓取，实测 20-40 秒），
+     * 默认 15 秒读超时会直接断开，因此允许调用方放宽。
+     */
+    public static Response get(String host, String path, int readTimeoutMs) throws IOException {
         List<String> ips = resolve(host);
         IOException last = null;
 
@@ -125,7 +135,7 @@ public final class Http {
         for (String ip : ips) {
             SSLSocket socket = null;
             try {
-                socket = open(ip);
+                socket = open(ip, readTimeoutMs);
                 Response response = exchange(socket, host, path);
                 release(socket, ip);
                 return response;
@@ -138,7 +148,7 @@ public final class Http {
     }
 
     /** 建连：IP 直连 + 清空 SNI。 */
-    private static SSLSocket open(String ip) throws IOException {
+    private static SSLSocket open(String ip, int readTimeoutMs) throws IOException {
         SSLContext ctx;
         try {
             ctx = context();
@@ -147,7 +157,7 @@ public final class Http {
         }
         SSLSocket socket = (SSLSocket) ctx.getSocketFactory().createSocket();
         socket.connect(new InetSocketAddress(ip, 443), CONNECT_TIMEOUT);
-        socket.setSoTimeout(READ_TIMEOUT);
+        socket.setSoTimeout(readTimeoutMs);
         socket.setTcpNoDelay(true);
 
         SSLParameters params = socket.getSSLParameters();

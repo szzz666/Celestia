@@ -10,11 +10,11 @@ import top.szzz666.KokonaCelestia.command.MenuSession;
 import top.szzz666.KokonaCelestia.command.PendingSelection;
 import top.szzz666.KokonaCelestia.config.MyConfig;
 import top.szzz666.KokonaCelestia.util.Reply;
+import top.szzz666.tools.TaskUtil;
 import top.szzz666.qq.entity.Event;
 import top.szzz666.qq.entity.Message;
 import top.szzz666.qq.entity.MessageData;
 import top.szzz666.qq.listener.QQEventHandler;
-import top.szzz666.tools.TaskUtil;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -242,6 +242,9 @@ public class QQListeners {
         List<Rule> rules = new ArrayList<>();
         for (String name : MyConfig.matchCommands) {
             rules.add(new Rule(name, true));
+        }
+        for (String name : MyConfig.profileFreshCommands) {
+            rules.add(new Rule(name, false));
         }
         for (String name : MyConfig.profileCommands) {
             rules.add(new Rule(name, false));

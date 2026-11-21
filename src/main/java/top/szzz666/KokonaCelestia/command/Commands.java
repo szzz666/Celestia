@@ -29,10 +29,33 @@ public final class Commands {
 
     // ==================== 看看 <昵称> ====================
 
+    /**
+     * 「看看」：读缓存出玩家档案，秒回。
+     * <p>
+     * 卡片右上角会标注数据抓取时间；需要最新数据请用 {@code 看看最新}。
+     */
     public static void profile(Reply reply, String argument) {
+        lookup(reply, argument, false);
+    }
+
+    /**
+     * 「看看最新」：强制向站点请求最新数据后出图。
+     * <p>
+     * 站点数据由它自己定期抓取，缓存里可能躺着十几天前的存档，
+     * 这个指令会走 {@code ?refresh=1} 让站点重新抓取。代价是 10-40 秒，
+     * 且该接口实测成功率约 1/3，失败时回退到缓存并说明。
+     */
+    public static void profileFresh(Reply reply, String argument) {
+        lookup(reply, argument, true);
+    }
+
+    /** 两个入口共用的查找与候选选择逻辑。 */
+    private static void lookup(Reply reply, String argument, boolean refresh) {
         String keyword = argument == null ? "" : argument.trim();
         if (keyword.isEmpty()) {
-            reply.text("请在指令后加上玩家昵称或 UID，例如：看看米雪儿");
+            reply.text(refresh
+                    ? "请在指令后加上玩家昵称或 UID，例如：看看最新米雪儿"
+                    : "请在指令后加上玩家昵称或 UID，例如：看看米雪儿");
             return;
         }
 
@@ -51,7 +74,7 @@ public final class Commands {
                                 PendingSelection.Kind.PROFILE, null, 0)));
                 return;
             }
-            renderProfile(reply, list.get(0));
+            renderProfile(reply, list.get(0), refresh);
         } catch (Exception e) {
             reply.text("查询失败：" + friendly(e));
         }
@@ -172,7 +195,7 @@ public final class Commands {
             if (entry.kind() == PendingSelection.Kind.MATCH && entry.extra() != null) {
                 renderMatch(reply, target, entry.extra());
             } else {
-                renderProfile(reply, target);
+                renderProfile(reply, target, true);
             }
         } catch (Exception e) {
             reply.text("查询失败：" + friendly(e));
@@ -197,11 +220,67 @@ public final class Commands {
 
     // ==================== 出图 ====================
 
-    private static void renderProfile(Reply reply, DakanuClient.PlayerSuggestion target)
-            throws Exception {
-        JsonObject raw = DakanuClient.summoner(target.playerId());
+    /**
+     * 出玩家档案。
+     * <p>
+     * 每次查询都向站点请求一次最新数据：站点是自行定期抓取的，缓存里可能躺着
+     * 十几天前的存档，直接读缓存会让用户以为查错了人。代价是每次都要等
+     * 20-40 秒，因此先发一条文本告知进度，避免用户以为机器人没反应。
+     * <p>
+     * 隐私玩家（{@code privacyStatus=hidden}）站点读不到新数据，刷新只会白等，
+     * 直接说明情况并用存档出图。
+     */
+    private static void renderProfile(Reply reply, DakanuClient.PlayerSuggestion target,
+                                      boolean refresh) throws Exception {
+        JsonObject raw;
+
+        if (!refresh) {
+            // 实测首次查询要 8 秒左右（拉头像、立绘、地图缩略图），
+            // 素材缓存后约 3-4 秒；先给一句提示，避免用户以为没收到指令
+            reply.text("请稍等…");
+            raw = DakanuClient.summoner(target.playerId());
+        } else {
+            // 先用缓存判断隐私状态：隐私玩家刷新也拿不到新数据，不必让用户空等
+            PlayerProfile cached = PlayerProfile.from(DakanuClient.summoner(target.playerId()));
+
+            if ("hidden".equalsIgnoreCase(cached.privacyStatus())) {
+                reply.text("「" + cached.nickname() + "」已开启生涯隐私，站点无法读取最新数据，以下为 "
+                        + describeAge(cached) + " 抓取的存档。");
+                reply.image(Renderer.render(new PlayerCard(cached)));
+                return;
+            }
+
+            // 先提示再等待：刷新耗时 20-40 秒，没有提示用户会以为消息丢了
+            reply.text("正在获取「" + cached.nickname() + "」的最新数据，请稍候…");
+
+            try {
+                raw = DakanuClient.summonerRefresh(target.playerId());
+            } catch (Exception refreshError) {
+                // 站点刷新会真的去上游重新抓取，偶发 524 超时很正常。
+                // 回退到已有缓存并说明情况，不让用户等了一分钟还看不到图。
+                reply.text("刷新未成功（站点上游超时），以下为 " + describeAge(cached)
+                        + " 的存档数据，稍后可再试。");
+                raw = DakanuClient.summoner(target.playerId());
+            }
+        }
+
         PlayerProfile profile = PlayerProfile.from(raw);
         reply.image(Renderer.render(new PlayerCard(profile)));
+    }
+
+    /** 把数据年龄说成「N 天前」这类更好懂的说法。 */
+    private static String describeAge(PlayerProfile profile) {
+        double hours = profile.dataAgeHours();
+        if (hours < 0) {
+            return "未知时间";
+        }
+        if (hours < 1) {
+            return "刚刚";
+        }
+        if (hours < 24) {
+            return (int) hours + " 小时前";
+        }
+        return (long) (hours / 24) + " 天前";
     }
 
     private static void renderMatch(Reply reply, DakanuClient.PlayerSuggestion target,

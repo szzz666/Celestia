@@ -17,6 +17,8 @@ public final class SingularityCommands {
     }
 
     public static void show(Reply reply) {
+        // 实测首次查询要 7 秒左右（排行榜第 25 页 + 头像），稳态约 4 秒
+        reply.text("请稍等…");
         try {
             SingularityClient.Result result = SingularityClient.compute();
             reply.image(Renderer.render(

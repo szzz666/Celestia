@@ -242,24 +242,58 @@ public final class Theme {
         return slug == null ? null : "/roles/" + slug + ".webp";
     }
 
-    /** 地图缩略图路径，mapId 201 -> map-01。 */
+    /**
+     * 地图缩略图路径。
+     * <p>
+     * 只有爆破模式的 {@code 201-220} 存在真实图片。其他模式（生化 11001+、推车 628+、
+     * 枪王 3000、大头 16002 等）虽然取模后也能拼出 {@code map-NN}，但那是**爆破模式**
+     * 的地图，语义对不上；{@code mapId=200} 拼出的 {@code map-00} 更是 404 页面。
+     * 因此这里只认 201-220，其余返回 null 由调用方显示占位。
+     */
     public static String mapImagePath(int mapId) {
         if (mapId < 201 || mapId > 220) {
             return null;
         }
-        int index = mapId - 200;
-        return String.format("/maps/map-%02d.webp", index);
+        return String.format("/maps/map-%02d.webp", mapId - 200);
     }
 
-    /** 地图名称表，与站点 mapNames 一致。 */
+    /** 地图名称表，与站点 mapNames 一致（map-01 … map-20）。 */
+    private static final String[] MAP_NAMES = {
+            "404基地", "88区", "欧拉港口", "风曳镇", "空间实验室", "柯西街区", "科斯迷特",
+            "2号仓库", "鹿鹿潮玩区", "水下发电厂", "码头小镇", "花明弓道馆", "离境区",
+            "亚克萨工厂", "簌雪东区", "洛希街区", "迦纳古城", "极地研究所", "奥卡努斯", "莱布伦城"
+    };
+
+    /**
+     * 地图名称。
+     * <p>
+     * 地图 ID 有多个体系：201-208 排位爆破、405/414 团队、628+ 推车、11001+ 生化等。
+     * 爆破模式与站点 {@code mapNames} 完全对应；其他模式的编号站点自己也未提供名称表，
+     * 因此按模式给出可读的替代文案，而不是统一的「未知地图」——
+     * 后者会让用户误以为程序出错（尤其容易与「404基地」混淆）。
+     *
+     * @param mapId   地图 ID
+     * @param modeLabel 模式名，用于给未收录的地图补充说明，可为 null
+     */
+    public static String mapName(int mapId, String modeLabel) {
+        int index = mapId % 100;
+        // 201-220 是爆破模式的正规编号，直接查表
+        if (mapId >= 201 && mapId <= 220) {
+            return MAP_NAMES[mapId - 201];
+        }
+        // 其他模式的编号虽然也能对上图片，但站点未给出名称，
+        // 用「模式名 + 编号」表述比「未知地图」更准确
+        if (index >= 1 && index <= 20) {
+            String mode = modeLabel == null || modeLabel.isBlank() ? "其他模式" : modeLabel;
+            return mode + " 地图 " + mapId;
+        }
+        String mode = modeLabel == null || modeLabel.isBlank() ? "其他模式" : modeLabel;
+        return mode + " 地图 " + mapId;
+    }
+
+    /** 兼容旧调用：只给 ID 时按爆破模式解析。 */
     public static String mapName(int mapId) {
-        String[] names = {
-                "404基地", "88区", "欧拉港口", "风曳镇", "空间实验室", "柯西街区", "科斯迷特",
-                "2号仓库", "鹿鹿潮玩区", "水下发电厂", "码头小镇", "花明弓道馆", "离境区",
-                "亚克萨工厂", "簌雪东区", "洛希街区", "迦纳古城", "极地研究所", "奥卡努斯", "莱布伦城"
-        };
-        int index = mapId - 201;
-        return index >= 0 && index < names.length ? names[index] : "未知地图";
+        return mapName(mapId, null);
     }
 
     /** 阵营名与配色。 */

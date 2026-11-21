@@ -21,6 +21,10 @@ public class MyConfig {
     @ConfigItem(key = "command.profile", comment = "玩家概览指令名")
     public static List<String> profileCommands = List.of("看看");
 
+    /** 「看看最新」独立指令：强制向站点请求最新数据。 */
+    @ConfigItem(key = "command.profileFresh", comment = "查看最新数据指令名")
+    public static List<String> profileFreshCommands = List.of("看看最新");
+
     @ConfigItem(key = "command.match", comment = "对局详情指令名（需放在玩家昵称之前）")
     public static List<String> matchCommands = List.of("看看对局");
 

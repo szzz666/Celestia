@@ -40,8 +40,10 @@ public final class HelpCard extends CardRenderer {
                     "逐层浏览全部内容（含漫画 / 联动 / 周边）", "菜单"),
 
             // ---- 战绩 ----
-            new Item("看看", alias(MyConfig.profileCommands), "<玩家昵称 / UID>",
-                    "玩家档案概览：段位、胜率、KDA、最近战绩", "看看米雪儿"),
+            new Item("看看", alias(MyConfig.profileCommands), "<昵称>",
+                    "玩家档案概览，读缓存秒回", "看看米雪儿"),
+            new Item("看看最新", alias(MyConfig.profileFreshCommands), "<昵称>",
+                    "同上，但强制向站点拉取最新数据", "看看最新米雪儿"),
             new Item("看看对局", alias(MyConfig.matchCommands), "<玩家昵称> <对局号>",
                     "单场对局详情，支持短号尾数匹配", "看看对局米雪儿114514"),
             new Item("排行", alias(MyConfig.rankCommands), "[页数]",

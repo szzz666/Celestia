@@ -37,7 +37,36 @@ public final class PlayerCard extends CardRenderer {
     protected String subtitle() {
         String season = profile.meta() == null ? "" : profile.meta().currentSeason();
         String stamp = STAMP.format(Instant.now().atZone(ZONE));
-        return season == null || season.isBlank() ? stamp : season + " · " + stamp;
+
+        StringBuilder sb = new StringBuilder();
+        if (season != null && !season.isBlank()) {
+            sb.append(season).append(" · ");
+        }
+
+        // 站点并非实时抓取：实测有玩家数据滞后十几天。
+        // 把抓取时间写在这里，避免用户拿过期数据与站点最新页面比对后误以为出错。
+        double age = profile.dataAgeHours();
+        if (age >= 0) {
+            sb.append("数据抓取于 ").append(relativeAge(age));
+            if (profile.dataStale()) {
+                sb.append("（已过期，非实时）");
+            }
+        } else {
+            sb.append(stamp);
+        }
+        return sb.toString();
+    }
+
+    /** 把小时数说成更好懂的说法。 */
+    private static String relativeAge(double hours) {
+        if (hours < 1) {
+            return "刚刚";
+        }
+        if (hours < 24) {
+            return (int) hours + " 小时前";
+        }
+        long days = (long) (hours / 24);
+        return days + " 天前";
     }
 
     // ==================== 布局常量（绘制与高度计算共用） ====================
@@ -230,9 +259,21 @@ public final class PlayerCard extends CardRenderer {
 
         String presence = Theme.presenceLabel(profile.presence());
         Color presenceColor = "online".equals(profile.presence()) ? Theme.WIN : Theme.FAINT;
-        canvas.chip(presence, Theme.font(11, true), presenceColor,
+        Font presenceFont = Theme.font(11, true);
+        canvas.chip(presence, presenceFont, presenceColor,
                 Theme.alpha(presenceColor, 24), Theme.alpha(presenceColor, 72),
                 cursor, metaY - 13, 10, 20);
+
+        // 隐私标记：紧跟在线状态，与「在线 / 离线」同一视觉层级。
+        // 隐私玩家的数据是残缺的（对局数可能只有 1 场、胜率 0%），
+        // 若不显眼标注，用户会误判成真实战绩。
+        if (profile.privacyHidden()) {
+            cursor += canvas.chipWidth(presence, presenceFont, 10) + 8;
+            Color privacyColor = new Color(113, 113, 122);
+            canvas.chip("隐私保护", Theme.font(11, true), privacyColor,
+                    Theme.alpha(privacyColor, 28), Theme.alpha(privacyColor, 90),
+                    cursor, metaY - 13, 10, 20);
+        }
 
         // 统计栅格：两行四列
         PlayerProfile.Summary s = profile.summary();
@@ -492,7 +533,7 @@ public final class PlayerCard extends CardRenderer {
         canvas.text(match.myScore() + " : " + match.opponentScore(), Theme.num(21, true),
                 Theme.INK, x + 16, y + 56);
 
-        canvas.textRight(Theme.mapName(match.mapId()), Theme.font(13, true), Theme.INK,
+        canvas.textRight(Theme.mapName(match.mapId(), match.modeLabel()), Theme.font(13, true), Theme.INK,
                 x + w - 16, y + 52);
         canvas.textRight(match.modeLabel() + " · " + formatTime(match.playedAt()),
                 Theme.font(11, false), new Color(100, 116, 139, 220), x + w - 16, y + 70);

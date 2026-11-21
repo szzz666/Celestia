@@ -15,12 +15,12 @@ import top.szzz666.KokonaCelestia.render.Assets;
 import top.szzz666.KokonaCelestia.render.Fonts;
 import top.szzz666.KokonaCelestia.render.SystemFontInstaller;
 import top.szzz666.KokonaCelestia.util.Reply;
+import top.szzz666.tools.TaskUtil;
 import top.szzz666.command.CommandManage;
 import top.szzz666.plugin.KokonaPlugin;
 import top.szzz666.plugin.PluginBase;
 import top.szzz666.qq.entity.Event;
 import top.szzz666.qq.listener.QQEventManage;
-import top.szzz666.tools.TaskUtil;
 
 import java.util.List;
 
@@ -93,6 +93,13 @@ public class KokonaCelestiaMain extends PluginBase {
                 (event, name, args) -> {
                     String argument = String.join(" ", args);
                     async(event, reply -> Commands.match(reply, argument));
+                });
+
+        CommandManage.register(names(MyConfig.profileFreshCommands, "看看最新"),
+                "查询玩家档案并强制拉取最新数据：看看最新 <昵称>", "卡丘战绩", PERM_ALL, SCOPE_BOTH,
+                (event, name, args) -> {
+                    String argument = String.join(" ", args);
+                    async(event, reply -> Commands.profileFresh(reply, argument));
                 });
 
         CommandManage.register(names(MyConfig.profileCommands, "看看"),

@@ -32,7 +32,29 @@ public record PlayerProfile(
         List<Role> roles,
         List<Match> recentMatches,
         List<Match> historyMatches,
-        Meta meta) {
+        Meta meta,
+        long queriedAt) {
+
+    /**
+     * 数据抓取时间距今多久（小时）。
+     * <p>
+     * 站点并非实时抓取：实测有的玩家数据滞后数天甚至十几天，
+     * 卡片需要把这一点告诉用户，否则会被误认为「查询结果不对」。
+     *
+     * @return 小时数；未知时间返回 -1
+     */
+    public double dataAgeHours() {
+        if (queriedAt <= 0) {
+            return -1;
+        }
+        return (System.currentTimeMillis() - queriedAt) / 3_600_000.0;
+    }
+
+    /** 数据是否明显滞后（超过 24 小时）。 */
+    public boolean dataStale() {
+        double age = dataAgeHours();
+        return age >= 24;
+    }
 
     /** 段位信息。 */
     public record Rank(int segment, int topSegment, int historicalSegment, int gradeScore,
@@ -170,7 +192,17 @@ public record PlayerProfile(
                 optString(presence, "state", "offline"),
                 optString(player, "privacyStatus", "unknown"),
                 optInt(player, "laud", 0),
-                rank, summary, modes, roles, recent, history, meta);
+                rank, summary, modes, roles, recent, history, meta,
+                optLong(player, "queriedAt", 0));
+    }
+
+    private static long optLong(JsonObject json, String key, long fallback) {
+        try {
+            return json.has(key) && !json.get(key).isJsonNull()
+                    ? json.get(key).getAsLong() : fallback;
+        } catch (Exception e) {
+            return fallback;
+        }
     }
 
     private static List<Match> parseMatches(JsonArray array) {

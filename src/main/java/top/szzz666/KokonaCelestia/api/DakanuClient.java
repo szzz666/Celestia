@@ -69,8 +69,23 @@ public final class DakanuClient {
         return value;
     }
 
+    /** 写入缓存（供强制刷新后覆写旧条目）。 */
+    private static void putCache(String key, JsonObject value) {
+        if (CACHE.size() > CACHE_LIMIT) {
+            CACHE.clear();
+        }
+        CACHE.put(key, new CacheEntry(value.toString(), System.currentTimeMillis() + cacheTtlMs()));
+    }
+
     private static JsonObject getJson(String path) throws IOException {
-        Http.Response response = Http.get(HOST, path);
+        return getJson(path, 0);
+    }
+
+    /** 带自定义读超时的请求；{@code readTimeoutMs <= 0} 用默认值。 */
+    private static JsonObject getJson(String path, int readTimeoutMs) throws IOException {
+        Http.Response response = readTimeoutMs > 0
+                ? Http.get(HOST, path, readTimeoutMs)
+                : Http.get(HOST, path);
         if (!response.ok()) {
             throw new IOException("接口返回 HTTP " + response.status() + "：" + truncate(response.text()));
         }
@@ -113,10 +128,28 @@ public final class DakanuClient {
         return list;
     }
 
-    /** 拉取玩家完整档案。 */
+    /** 拉取玩家完整档案（走缓存）。 */
     public static JsonObject summoner(String playerId) throws IOException {
         return cachedJson("summoner:" + playerId, cacheTtlMs(),
                 () -> getJson("/api/summoner/" + encode(playerId) + "?region=cn"));
+    }
+
+    /**
+     * 强制刷新玩家数据。
+     * <p>
+     * 站点并非实时同步：数据由站点定期抓取，实测有玩家滞后十几天。
+     * 页面上的「更新数据」按钮走的就是 {@code ?refresh=1}，服务端会同步重新抓取，
+     * 因此这个请求明显更慢（数秒到二十几秒）。
+     * <p>
+     * 该调用不进缓存，且会覆写同一玩家的缓存条目，避免刚刷完又读到旧数据。
+     */
+    public static JsonObject summonerRefresh(String playerId) throws IOException {
+        // 实测该接口成功率仅约 1/3（另外 2/3 返回 524），重试会把等待翻倍，
+        // 收益不抵代价：失败就快速回退缓存，由调用方向用户说明。
+        JsonObject fresh = getJson(
+                "/api/summoner/" + encode(playerId) + "?region=cn&refresh=1", 40_000);
+        putCache("summoner:" + playerId, fresh);
+        return fresh;
     }
 
     /** 拉取对局详情。 */

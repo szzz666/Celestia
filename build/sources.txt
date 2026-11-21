@@ -10,6 +10,7 @@ src/main/java/top/szzz666/KokonaCelestia/render/MenuCard.java
 src/main/java/top/szzz666/KokonaCelestia/render/HelpCard.java
 src/main/java/top/szzz666/KokonaCelestia/render/MatchCard.java
 src/main/java/top/szzz666/KokonaCelestia/render/RankCard.java
+src/main/java/top/szzz666/KokonaCelestia/render/RolesCard.java
 src/main/java/top/szzz666/KokonaCelestia/render/Renderer.java
 src/main/java/top/szzz666/KokonaCelestia/render/CardRenderer.java
 src/main/java/top/szzz666/KokonaCelestia/render/BgmCard.java
@@ -18,16 +19,20 @@ src/main/java/top/szzz666/KokonaCelestia/render/RedeemCard.java
 src/main/java/top/szzz666/KokonaCelestia/render/Theme.java
 src/main/java/top/szzz666/KokonaCelestia/render/WikiCard.java
 src/main/java/top/szzz666/KokonaCelestia/render/Canvas.java
+src/main/java/top/szzz666/KokonaCelestia/render/SingularityCard.java
 src/main/java/top/szzz666/KokonaCelestia/render/GalleryCard.java
 src/main/java/top/szzz666/KokonaCelestia/render/PlayerCard.java
 src/main/java/top/szzz666/KokonaCelestia/model/PlayerProfile.java
 src/main/java/top/szzz666/KokonaCelestia/api/WikiBgm.java
+src/main/java/top/szzz666/KokonaCelestia/api/RolesClient.java
+src/main/java/top/szzz666/KokonaCelestia/api/SingularityClient.java
 src/main/java/top/szzz666/KokonaCelestia/api/WikiClient.java
 src/main/java/top/szzz666/KokonaCelestia/api/DakanuClient.java
 src/main/java/top/szzz666/KokonaCelestia/api/WikiWallpaper.java
 src/main/java/top/szzz666/KokonaCelestia/api/WikiGallery.java
 src/main/java/top/szzz666/KokonaCelestia/command/PendingSelection.java
 src/main/java/top/szzz666/KokonaCelestia/command/WikiCommands.java
+src/main/java/top/szzz666/KokonaCelestia/command/RolesCommands.java
 src/main/java/top/szzz666/KokonaCelestia/command/MenuCommands.java
 src/main/java/top/szzz666/KokonaCelestia/command/MenuTree.java
 src/main/java/top/szzz666/KokonaCelestia/command/WallpaperCommands.java
@@ -37,3 +42,4 @@ src/main/java/top/szzz666/KokonaCelestia/command/BgmCommands.java
 src/main/java/top/szzz666/KokonaCelestia/command/GalleryCommands.java
 src/main/java/top/szzz666/KokonaCelestia/command/WikiDirect.java
 src/main/java/top/szzz666/KokonaCelestia/command/CardContext.java
+src/main/java/top/szzz666/KokonaCelestia/command/SingularityCommands.java

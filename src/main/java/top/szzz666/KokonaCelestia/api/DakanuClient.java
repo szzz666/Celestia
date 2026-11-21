@@ -131,6 +131,17 @@ public final class DakanuClient {
                 () -> getJson("/api/rankings?type=" + type + "&page=" + page + "&page_size=" + pageSize));
     }
 
+    /**
+     * 角色数据与地图阵容（对应站点 /roles 页面）。
+     * <p>
+     * 返回体含 {@code entries}（角色排行）与 {@code mapStats}（地图阵容），
+     * 数据集较大且更新频率低，缓存 10 分钟。
+     */
+    public static JsonObject rankingsForRoles() throws IOException {
+        return cachedJson("rolesRanking", 600_000L,
+                () -> getJson("/api/roles/ranking?min_games=3"));
+    }
+
     /** 当前赛季信息（含结束时间）。 */
     public static JsonObject currentSeason() throws IOException {
         return cachedJson("season", 300_000L, () -> getJson("/api/seasons/current"));

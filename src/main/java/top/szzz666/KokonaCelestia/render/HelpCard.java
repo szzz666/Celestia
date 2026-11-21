@@ -8,7 +8,6 @@ import java.awt.Graphics2D;
 
 /** “帮助”指令菜单出图。 */
 public final class HelpCard extends CardRenderer {
-
     /**
      * 一条指令的展示信息。
      *
@@ -20,7 +19,6 @@ public final class HelpCard extends CardRenderer {
      */
     private record Item(String command, String aliases, String args,
                         String description, String example) {
-
         /** 主名 + 别名的完整展示串，例如「兑换码 cdk / 礼包码」。 */
         String fullName() {
             return aliases == null || aliases.isBlank()
@@ -55,16 +53,6 @@ public final class HelpCard extends CardRenderer {
             new Item("兑换码", alias(MyConfig.redeemCommands), "无",
                     "当前可用兑换码，已自动过滤失效", "兑换码"),
 
-            // ---- 图鉴 ----
-            new Item("勋章", alias(MyConfig.medalCommands), "[页码/名称]",
-                    "勋章图鉴，带页码翻页，带名称看大图", "勋章 闪耀鎏金"),
-            new Item("喷漆", alias(MyConfig.sprayCommands), "[页码/名称]", "喷漆图鉴", "喷漆"),
-            new Item("头像框", alias(MyConfig.avatarFrameCommands), "[页码/名称]", "头像框图鉴", "头像框"),
-            new Item("基板", alias(MyConfig.baseplateCommands), "[页码/名称]", "基板图鉴", "基板"),
-            new Item("个性名片", alias(MyConfig.namecardCommands), "[页码/名称]", "个性名片图鉴", "个性名片"),
-            new Item("核心", alias(MyConfig.coreCommands), "[页码/名称]", "旧版芯片工艺", "核心"),
-            new Item("表情包", alias(MyConfig.emojiCommands), "[页码/名称]", "官方表情包合集", "表情包"),
-
             // ---- 游戏延伸 ----
             new Item("壁纸", alias(MyConfig.wallpaperCommands), "[序号/随机]",
                     "壁纸列表、按序号取原图、随机一张", "壁纸 3"),
@@ -72,21 +60,12 @@ public final class HelpCard extends CardRenderer {
                     "随机发送一张 1920px 原图", "随机壁纸"),
             new Item("BGM", alias(MyConfig.bgmCommands), "[序号/曲名]",
                     "曲目列表与点播", "BGM 5"),
-
-            // ---- 资料与规则 ----
-            new Item("地图", alias(MyConfig.mapCommands), "[序号]", "各模式地图一览", "地图"),
-            new Item("角色", alias(MyConfig.roleCommands), "[序号]", "超弦体图鉴", "角色"),
-            new Item("武器", alias(MyConfig.weaponCommands), "[序号]", "武器图鉴", "武器"),
-            new Item("角色定位", alias(MyConfig.rolePositionCommands), "[序号]",
-                    "6 种定位说明", "角色定位"),
-            new Item("战斗模式", alias(MyConfig.battleModeCommands), "[序号]",
-                    "排位 / 团竞规则", "战斗模式"),
-            new Item("武器数据", alias(MyConfig.weaponDataCommands), "[序号]",
-                    "TTK / DPS 理论值", "武器数据"),
-            new Item("信用分", alias(MyConfig.creditCommands), "[序号]",
-                    "信誉评级与处罚", "信用分"),
-            new Item("活动", alias(MyConfig.eventCommands), "[序号]", "历史活动一览", "活动"),
-            new Item("赛季", alias(MyConfig.seasonCommands), "[序号]", "赛季奖励与冲刺", "赛季"),
+            new Item("表情包", alias(MyConfig.emojiCommands), "[页码/名称]",
+                    "官方表情包合集", "表情包"),
+            new Item("角色数据", alias(MyConfig.rolesCommands), "无",
+                    "角色胜率排行与地图攻防阵容", "角色数据"),
+            new Item("奇点分", alias(MyConfig.singularityCommands), "无",
+                    "进入奇点所需分数与第 500 名分界线", "奇点分"),
         };
     }
 
@@ -110,7 +89,6 @@ public final class HelpCard extends CardRenderer {
     private static final int HERO_HEIGHT = 108;
     private static final int SECTION_GAP = 16;
     private static final int COMMAND_ROW_HEIGHT = 52;
-
 
     @Override
     protected int layoutHeight() {

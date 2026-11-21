@@ -41,10 +41,33 @@ public final class GalleryCommands {
                 return;
             }
             reply.text(hit.name());
-            reply.image(hit.imageUrl());
+            reply.image(originalUrl(hit.imageUrl()));
         } catch (Exception e) {
             reply.text("查询失败：" + e.getMessage());
         }
+    }
+
+    /**
+     * 把缩略图地址还原成原图。
+     * <p>
+     * 图鉴列表用的是 {@code .../thumb/xxx/<w>px-name.png} 缩略图（180px），
+     * 单张查看时用原图更清晰（表情包原图 256px，勋章与喷漆更大）。
+     * 已经是原图地址则原样返回。
+     */
+    static String originalUrl(String thumbUrl) {
+        if (thumbUrl == null || !thumbUrl.contains("/thumb/")) {
+            return thumbUrl;
+        }
+        String full = thumbUrl.replace("/thumb/", "/");
+        // 去掉末段 "/<宽>px-<文件名>"
+        int slash = full.lastIndexOf('/');
+        if (slash > 0) {
+            String tail = full.substring(slash + 1);
+            if (tail.matches("\\d+px-.*")) {
+                full = full.substring(0, slash);
+            }
+        }
+        return full;
     }
 
     /** 名称精确匹配优先，其次包含匹配。 */

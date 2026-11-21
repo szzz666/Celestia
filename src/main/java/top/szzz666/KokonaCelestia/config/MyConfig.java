@@ -61,6 +61,14 @@ public class MyConfig {
     // ==================== WIKI 页面直达指令 ====================
     // 菜单里的每个页面也都有直接指令，知道要查什么时不必逐层点。
 
+    /** 角色数据与地图阵容（对应 dakanu.com/roles）。 */
+    @ConfigItem(key = "command.roles", comment = "角色数据指令名")
+    public static List<String> rolesCommands = List.of("角色数据", "角色排行");
+
+    /** 奇点分（第 500 名分界线）。 */
+    @ConfigItem(key = "command.singularity", comment = "奇点分指令名")
+    public static List<String> singularityCommands = List.of("奇点分", "奇点");
+
     @ConfigItem(key = "command.wallpaper", comment = "壁纸指令名")
     public static List<String> wallpaperCommands = List.of("壁纸");
 
@@ -69,51 +77,6 @@ public class MyConfig {
 
     @ConfigItem(key = "command.emoji", comment = "表情包指令名")
     public static List<String> emojiCommands = List.of("表情包", "表情");
-
-    @ConfigItem(key = "command.medal", comment = "勋章指令名")
-    public static List<String> medalCommands = List.of("勋章");
-
-    @ConfigItem(key = "command.spray", comment = "喷漆指令名")
-    public static List<String> sprayCommands = List.of("喷漆");
-
-    @ConfigItem(key = "command.avatarFrame", comment = "头像框指令名")
-    public static List<String> avatarFrameCommands = List.of("头像框");
-
-    @ConfigItem(key = "command.baseplate", comment = "基板指令名")
-    public static List<String> baseplateCommands = List.of("基板");
-
-    @ConfigItem(key = "command.namecard", comment = "个性名片指令名")
-    public static List<String> namecardCommands = List.of("个性名片", "名片");
-
-    @ConfigItem(key = "command.core", comment = "核心指令名")
-    public static List<String> coreCommands = List.of("核心");
-
-    @ConfigItem(key = "command.map", comment = "地图指令名")
-    public static List<String> mapCommands = List.of("地图");
-
-    @ConfigItem(key = "command.role", comment = "角色指令名")
-    public static List<String> roleCommands = List.of("角色", "超弦体");
-
-    @ConfigItem(key = "command.weapon", comment = "武器指令名")
-    public static List<String> weaponCommands = List.of("武器", "枪械");
-
-    @ConfigItem(key = "command.rolePosition", comment = "角色定位指令名")
-    public static List<String> rolePositionCommands = List.of("角色定位", "定位");
-
-    @ConfigItem(key = "command.battleMode", comment = "战斗模式指令名")
-    public static List<String> battleModeCommands = List.of("战斗模式", "排位规则");
-
-    @ConfigItem(key = "command.weaponData", comment = "武器数据指令名")
-    public static List<String> weaponDataCommands = List.of("武器数据", "ttk", "dps");
-
-    @ConfigItem(key = "command.credit", comment = "信用分指令名")
-    public static List<String> creditCommands = List.of("信用分", "信誉分");
-
-    @ConfigItem(key = "command.event", comment = "活动指令名")
-    public static List<String> eventCommands = List.of("活动");
-
-    @ConfigItem(key = "command.season", comment = "赛季指令名")
-    public static List<String> seasonCommands = List.of("赛季", "赛季冲刺");
 
     @ConfigItem(key = "rank.page-size", comment = "排行榜每页人数（最大 100）")
     public static int rankPageSize = 20;

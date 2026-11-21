@@ -5,6 +5,8 @@ import top.szzz666.KokonaCelestia.command.CardContext;
 import top.szzz666.KokonaCelestia.command.Commands;
 import top.szzz666.KokonaCelestia.command.MenuCommands;
 import top.szzz666.KokonaCelestia.command.WikiCommands;
+import top.szzz666.KokonaCelestia.command.RolesCommands;
+import top.szzz666.KokonaCelestia.command.SingularityCommands;
 import top.szzz666.KokonaCelestia.command.WallpaperCommands;
 import top.szzz666.KokonaCelestia.command.WikiDirect;
 import top.szzz666.KokonaCelestia.listener.QQListeners;
@@ -122,6 +124,17 @@ public class KokonaCelestiaMain extends PluginBase {
         // 菜单能到达的每个页面都有直达指令，知道要查什么时不必逐层点选。
         // 参数为页码（图鉴页）或章节序号（其他页面）。
         // 壁纸单独实现：带序号取原图，带「随机」随机发一张
+        CommandManage.register(names(MyConfig.singularityCommands, "奇点分"),
+                "查看当前奇点分与第 500 名分界线", "卡丘战绩", PERM_ALL, SCOPE_BOTH,
+                (event, name, args) -> async(event, SingularityCommands::show));
+
+        CommandManage.register(names(MyConfig.rolesCommands, "角色数据"),
+                "查看角色胜率排行与地图胜率（含阵容）", "卡丘战绩", PERM_ALL, SCOPE_BOTH,
+                (event, name, args) -> {
+                    String argument = String.join(" ", args);
+                    async(event, reply -> RolesCommands.show(reply, argument));
+                });
+
         CommandManage.register(names(MyConfig.wallpaperCommands, "壁纸"),
                 "查看壁纸：壁纸 看列表，壁纸 3 看原图，壁纸 随机 随机一张",
                 "卡丘战绩", PERM_ALL, SCOPE_BOTH,
@@ -134,21 +147,6 @@ public class KokonaCelestiaMain extends PluginBase {
                 "随机发送一张官方壁纸", "卡丘战绩", PERM_ALL, SCOPE_BOTH,
                 (event, name, args) -> async(event, WallpaperCommands::random));
         registerWiki("表情包", "官方表情包", MyConfig.emojiCommands);
-        registerWiki("勋章", "勋章", MyConfig.medalCommands);
-        registerWiki("喷漆", "喷漆", MyConfig.sprayCommands);
-        registerWiki("头像框", "头像框", MyConfig.avatarFrameCommands);
-        registerWiki("基板", "基板", MyConfig.baseplateCommands);
-        registerWiki("个性名片", "个性名片", MyConfig.namecardCommands);
-        registerWiki("核心", "核心", MyConfig.coreCommands);
-        registerWiki("地图", "地图", MyConfig.mapCommands);
-        registerWiki("角色筛选", "角色图鉴", MyConfig.roleCommands);
-        registerWiki("武器筛选", "武器图鉴", MyConfig.weaponCommands);
-        registerWiki("超弦体定位", "角色定位", MyConfig.rolePositionCommands);
-        registerWiki("战斗模式/排位爆破", "战斗模式", MyConfig.battleModeCommands);
-        registerWiki("主武器理论数据表", "武器数据", MyConfig.weaponDataCommands);
-        registerWiki("信用分", "信用分", MyConfig.creditCommands);
-        registerWiki("活动", "活动", MyConfig.eventCommands);
-        registerWiki("赛季冲刺", "赛季冲刺", MyConfig.seasonCommands);
 
         CommandManage.register(names(MyConfig.rankCommands, "排行"),
                 "查询全服排行榜：排行 [页数]", "卡丘战绩", PERM_ALL, SCOPE_BOTH,

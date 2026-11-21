@@ -8,6 +8,7 @@ import top.szzz666.KokonaCelestia.render.Renderer;
 import top.szzz666.KokonaCelestia.render.WikiCard;
 import top.szzz666.KokonaCelestia.util.Reply;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -45,12 +46,13 @@ public final class WikiDirect {
                     reply.text("「" + label + "」暂时没有可展示的条目。");
                     return;
                 }
+                // 数字当页码，其他文字当条目名称（查看大图）
                 int pageNo = 1;
+                if (!arg.isEmpty() && !arg.matches("\\d{1,2}")) {
+                    GalleryCommands.item(reply, page, arg);
+                    return;
+                }
                 if (!arg.isEmpty()) {
-                    if (!arg.matches("\\d{1,2}")) {
-                        reply.text("页码需要是数字，例如：" + label + " 2");
-                        return;
-                    }
                     pageNo = Integer.parseInt(arg);
                 }
                 int pageSize = MenuTree.GALLERY_PAGE_SIZE;
@@ -63,6 +65,9 @@ public final class WikiDirect {
                 int to = Math.min(all.size(), from + pageSize);
                 reply.image(Renderer.render(new GalleryCard(
                         label, all.subList(from, to), all.size())));
+                // 登记上下文，用户可直接回数字翻页
+                CardContext.remember(reply.groupId(), reply.userId(),
+                        CardContext.Kind.GALLERY, page, pageNo, totalPages);
                 return;
             }
 
@@ -78,24 +83,54 @@ public final class WikiDirect {
                 reply.image(Renderer.render(new MenuCard(level, "指令 · " + label, false)));
                 return;
             }
-            if (!arg.matches("\\d{1,2}")) {
+            // 支持两种写法：「勋章 2」（看第 2 章）与「勋章 2 3」（看第 2 章第 3 段）
+            String[] parts = arg.split("\\s+");
+            if (!parts[0].matches("\\d{1,2}")) {
                 reply.text("章节序号需要是数字，例如：" + label + " 2");
                 return;
             }
-            int index = Integer.parseInt(arg);
+            int index = Integer.parseInt(parts[0]);
             if (index < 1 || index > sections.size()) {
                 reply.text("章节范围是 1 - " + sections.size() + "。");
                 return;
             }
             WikiClient.Section section = sections.get(index - 1);
-            // 章节过长时提示分段，避免出图被截断
-            if (section.lines().size() > 200) {
-                int pages = (int) Math.ceil(section.lines().size() / 200.0);
-                reply.text("「" + section.title() + "」共 " + section.lines().size()
-                        + " 行，已分 " + pages + " 段。\n"
-                        + "发送「" + label + " " + index + " 1」查看第 1 段。");
+            int totalLines = section.lines().size();
+            int segmentSize = 200;
+
+            // 章节过长时按段展示，避免出图被截断
+            if (totalLines > segmentSize) {
+                int segments = (int) Math.ceil(totalLines / (double) segmentSize);
+                int segmentNo = 1;
+                if (parts.length >= 2) {
+                    if (!parts[1].matches("\\d{1,2}")) {
+                        reply.text("分段序号需要是数字，例如：" + label + " " + index + " 2");
+                        return;
+                    }
+                    segmentNo = Integer.parseInt(parts[1]);
+                    if (segmentNo < 1 || segmentNo > segments) {
+                        reply.text("「" + section.title() + "」共 " + segments
+                                + " 段，分段序号范围是 1 - " + segments + "。");
+                        return;
+                    }
+                } else {
+                    // 只给了章节号：列出分段让用户选
+                    reply.text("「" + section.title() + "」共 " + totalLines
+                            + " 行，已分 " + segments + " 段。\n"
+                            + "发送「" + label + " " + index + " 1」查看第 1 段"
+                            + "（把末尾数字换成 1 - " + segments + " 即可切换）。");
+                    return;
+                }
+
+                int from = (segmentNo - 1) * segmentSize;
+                int to = Math.min(totalLines, from + segmentSize);
+                List<String> slice = new ArrayList<>(section.lines().subList(from, to));
+                String title = label + " · " + section.title() + " · 第 " + segmentNo + " 段";
+                reply.image(Renderer.render(new WikiCard(title,
+                        new WikiClient.Article(title, WikiClient.pageUrl(page), slice))));
                 return;
             }
+
             reply.image(Renderer.render(new WikiCard(
                     label + " · " + section.title(),
                     new WikiClient.Article(section.title(),

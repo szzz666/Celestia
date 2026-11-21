@@ -3,11 +3,16 @@
 /Users/mac/IdeaProjects/Celestia/src/main/java/top/szzz666/KokonaCelestia/api/WikiBgm.java
 /Users/mac/IdeaProjects/Celestia/src/main/java/top/szzz666/KokonaCelestia/api/WikiClient.java
 /Users/mac/IdeaProjects/Celestia/src/main/java/top/szzz666/KokonaCelestia/api/WikiGallery.java
+/Users/mac/IdeaProjects/Celestia/src/main/java/top/szzz666/KokonaCelestia/api/WikiWallpaper.java
+/Users/mac/IdeaProjects/Celestia/src/main/java/top/szzz666/KokonaCelestia/command/BgmCommands.java
+/Users/mac/IdeaProjects/Celestia/src/main/java/top/szzz666/KokonaCelestia/command/CardContext.java
 /Users/mac/IdeaProjects/Celestia/src/main/java/top/szzz666/KokonaCelestia/command/Commands.java
+/Users/mac/IdeaProjects/Celestia/src/main/java/top/szzz666/KokonaCelestia/command/GalleryCommands.java
 /Users/mac/IdeaProjects/Celestia/src/main/java/top/szzz666/KokonaCelestia/command/MenuCommands.java
 /Users/mac/IdeaProjects/Celestia/src/main/java/top/szzz666/KokonaCelestia/command/MenuSession.java
 /Users/mac/IdeaProjects/Celestia/src/main/java/top/szzz666/KokonaCelestia/command/MenuTree.java
 /Users/mac/IdeaProjects/Celestia/src/main/java/top/szzz666/KokonaCelestia/command/PendingSelection.java
+/Users/mac/IdeaProjects/Celestia/src/main/java/top/szzz666/KokonaCelestia/command/WallpaperCommands.java
 /Users/mac/IdeaProjects/Celestia/src/main/java/top/szzz666/KokonaCelestia/command/WikiCommands.java
 /Users/mac/IdeaProjects/Celestia/src/main/java/top/szzz666/KokonaCelestia/command/WikiDirect.java
 /Users/mac/IdeaProjects/Celestia/src/main/java/top/szzz666/KokonaCelestia/config/MyConfig.java
@@ -28,6 +33,7 @@
 /Users/mac/IdeaProjects/Celestia/src/main/java/top/szzz666/KokonaCelestia/render/Renderer.java
 /Users/mac/IdeaProjects/Celestia/src/main/java/top/szzz666/KokonaCelestia/render/SystemFontInstaller.java
 /Users/mac/IdeaProjects/Celestia/src/main/java/top/szzz666/KokonaCelestia/render/Theme.java
+/Users/mac/IdeaProjects/Celestia/src/main/java/top/szzz666/KokonaCelestia/render/WallpaperCard.java
 /Users/mac/IdeaProjects/Celestia/src/main/java/top/szzz666/KokonaCelestia/render/WikiCard.java
 /Users/mac/IdeaProjects/Celestia/src/main/java/top/szzz666/KokonaCelestia/util/Http.java
 /Users/mac/IdeaProjects/Celestia/src/main/java/top/szzz666/KokonaCelestia/util/Reply.java

@@ -1,5 +1,7 @@
 package top.szzz666.KokonaCelestia.render;
 
+import top.szzz666.KokonaCelestia.config.MyConfig;
+
 import java.awt.Color;
 import java.awt.GradientPaint;
 import java.awt.Graphics2D;
@@ -7,35 +9,98 @@ import java.awt.Graphics2D;
 /** “帮助”指令菜单出图。 */
 public final class HelpCard extends CardRenderer {
 
-    private record Item(String command, String args, String description, String example) {
+    /**
+     * 一条指令的展示信息。
+     *
+     * @param command     主指令名
+     * @param aliases     别名（取自配置，可为空）
+     * @param args        参数说明
+     * @param description 功能说明
+     * @param example     使用示例
+     */
+    private record Item(String command, String aliases, String args,
+                        String description, String example) {
+
+        /** 主名 + 别名的完整展示串，例如「兑换码 cdk / 礼包码」。 */
+        String fullName() {
+            return aliases == null || aliases.isBlank()
+                    ? command : command + " " + aliases;
+        }
     }
 
-    private static final Item[] ITEMS = {
-            new Item("看看", "<玩家昵称 / UID>", "查询玩家档案概览：段位、胜率、KDA、最近战绩", "看看米雪儿"),
-            new Item("看看对局", "<玩家昵称> <对局号>", "查询单场对局详情，支持短号尾数匹配", "看看对局米雪儿114514"),
-            new Item("排行", "[页数]", "查询全服段位排行榜，默认第 1 页", "排行2"),
-            new Item("兑换码", "无", "查看当前可用的游戏兑换码，已自动过滤失效项", "兑换码"),
-            new Item("BGM", "[序号/曲名]", "查看曲目或点播：BGM 查看列表，BGM 5 播放", "BGM 5"),
-            new Item("wiki", "<关键词>", "查询 WIKI 任意页面：地图、信用分、勋章、角色、剧情等", "wiki 信用分"),
-            new Item("勋章 / 喷漆 / 头像框 / 基板", "[页码]", "装饰图鉴，直接出图，带页码可翻页", "勋章 2"),
-            new Item("壁纸 / 表情包", "[页码]", "游戏延伸内容，直接查", "壁纸"),
-            new Item("地图 / 角色 / 武器", "[序号]", "WIKI 其他栏目，带序号看具体章节", "地图 2"),
-            new Item("信用分 / 活动 / 赛季 / 核心", "[序号]", "玩法与规则说明", "信用分"),
-            new Item("帮助", "无", "查看全部指令一览", "帮助"),
-            new Item("菜单", "无", "逐层浏览全部内容（含漫画 / 联动 / 周边）", "菜单"),
-    };
+    /**
+     * 指令一览。
+     * <p>
+     * 每条依次为：主指令名 / 别名 / 参数 / 说明 / 示例。
+     * 别名从 {@code MyConfig} 动态读取，改配置后帮助图会同步更新。
+     */
+    private static Item[] items() {
+        return new Item[] {
+            // ---- 通用 ----
+            new Item("帮助", alias(MyConfig.helpCommands), "无", "查看本指令一览", "帮助"),
+            new Item("菜单", alias(MyConfig.menuCommands), "无",
+                    "逐层浏览全部内容（含漫画 / 联动 / 周边）", "菜单"),
 
-    private static final String[][] TIPS = {
-            {"防误触", "指令需精确匹配前缀，群聊日常对话不会触发机器人。"},
-            {"空格可省略", "“看看米雪儿”与“看看 米雪儿”效果相同，带不带空格都行。"},
-            {"同名玩家", "匹配到多个同名玩家时会列出候选，回复序号选择，回复「取消」放弃。"},
-            {"昵称含空格", "昵称可以带空格，机器人会把指令后的内容整体当作昵称。"},
-            {"短号查询", "对局号支持只写尾数，会自动匹配最近的对局。"},
-            {"隐私保护", "玩家开启生涯隐私时，只能看到基础档案。"},
-            {"WIKI 功能", "wiki 支持查询 WIKI 全部 1000+ 页面，找不到时可用更短的关键词。"},
-            {"长页面", "图鉴类页面内容过多时只显示前 160 行，末尾会提示并附原文链接。"},
-            {"响应速度", "高峰期上游接口较慢，图片通常需要几秒生成。"},
-    };
+            // ---- 战绩 ----
+            new Item("看看", alias(MyConfig.profileCommands), "<玩家昵称 / UID>",
+                    "玩家档案概览：段位、胜率、KDA、最近战绩", "看看米雪儿"),
+            new Item("看看对局", alias(MyConfig.matchCommands), "<玩家昵称> <对局号>",
+                    "单场对局详情，支持短号尾数匹配", "看看对局米雪儿114514"),
+            new Item("排行", alias(MyConfig.rankCommands), "[页数]",
+                    "全服段位排行榜，默认第 1 页", "排行2"),
+
+            // ---- WIKI ----
+            new Item("wiki", alias(MyConfig.wikiCommands), "<关键词>",
+                    "查询 WIKI 任意页面", "wiki 信用分"),
+            new Item("兑换码", alias(MyConfig.redeemCommands), "无",
+                    "当前可用兑换码，已自动过滤失效", "兑换码"),
+
+            // ---- 图鉴 ----
+            new Item("勋章", alias(MyConfig.medalCommands), "[页码/名称]",
+                    "勋章图鉴，带页码翻页，带名称看大图", "勋章 闪耀鎏金"),
+            new Item("喷漆", alias(MyConfig.sprayCommands), "[页码/名称]", "喷漆图鉴", "喷漆"),
+            new Item("头像框", alias(MyConfig.avatarFrameCommands), "[页码/名称]", "头像框图鉴", "头像框"),
+            new Item("基板", alias(MyConfig.baseplateCommands), "[页码/名称]", "基板图鉴", "基板"),
+            new Item("个性名片", alias(MyConfig.namecardCommands), "[页码/名称]", "个性名片图鉴", "个性名片"),
+            new Item("核心", alias(MyConfig.coreCommands), "[页码/名称]", "旧版芯片工艺", "核心"),
+            new Item("表情包", alias(MyConfig.emojiCommands), "[页码/名称]", "官方表情包合集", "表情包"),
+
+            // ---- 游戏延伸 ----
+            new Item("壁纸", alias(MyConfig.wallpaperCommands), "[序号/随机]",
+                    "壁纸列表、按序号取原图、随机一张", "壁纸 3"),
+            new Item("随机壁纸", alias(MyConfig.randomWallpaperCommands), "无",
+                    "随机发送一张 1920px 原图", "随机壁纸"),
+            new Item("BGM", alias(MyConfig.bgmCommands), "[序号/曲名]",
+                    "曲目列表与点播", "BGM 5"),
+
+            // ---- 资料与规则 ----
+            new Item("地图", alias(MyConfig.mapCommands), "[序号]", "各模式地图一览", "地图"),
+            new Item("角色", alias(MyConfig.roleCommands), "[序号]", "超弦体图鉴", "角色"),
+            new Item("武器", alias(MyConfig.weaponCommands), "[序号]", "武器图鉴", "武器"),
+            new Item("角色定位", alias(MyConfig.rolePositionCommands), "[序号]",
+                    "6 种定位说明", "角色定位"),
+            new Item("战斗模式", alias(MyConfig.battleModeCommands), "[序号]",
+                    "排位 / 团竞规则", "战斗模式"),
+            new Item("武器数据", alias(MyConfig.weaponDataCommands), "[序号]",
+                    "TTK / DPS 理论值", "武器数据"),
+            new Item("信用分", alias(MyConfig.creditCommands), "[序号]",
+                    "信誉评级与处罚", "信用分"),
+            new Item("活动", alias(MyConfig.eventCommands), "[序号]", "历史活动一览", "活动"),
+            new Item("赛季", alias(MyConfig.seasonCommands), "[序号]", "赛季奖励与冲刺", "赛季"),
+        };
+    }
+
+    /**
+     * 从配置取别名，拼成「别名1 / 别名2」。
+     * <p>
+     * 第一个名字是主名（已在指令名前显示），这里只返回其余别名。
+     */
+    private static String alias(java.util.List<String> names) {
+        if (names == null || names.size() <= 1) {
+            return "";
+        }
+        return String.join(" / ", names.subList(1, names.size()));
+    }
 
     @Override
     protected String subtitleTitle() {
@@ -44,16 +109,14 @@ public final class HelpCard extends CardRenderer {
 
     private static final int HERO_HEIGHT = 108;
     private static final int SECTION_GAP = 16;
-    private static final int COMMAND_ROW_HEIGHT = 62;
-    private static final int TIP_ROW_HEIGHT = 34;
+    private static final int COMMAND_ROW_HEIGHT = 52;
+
 
     @Override
     protected int layoutHeight() {
         int y = HEADER_HEIGHT;
         y += HERO_HEIGHT + SECTION_GAP;
-        y += BAR_HEIGHT + 12 + ITEMS.length * COMMAND_ROW_HEIGHT + 16;
-        y += SECTION_GAP;
-        y += BAR_HEIGHT + 12 + TIPS.length * TIP_ROW_HEIGHT + 18;
+        y += BAR_HEIGHT + 12 + items().length * COMMAND_ROW_HEIGHT + 16;
         y += FOOTER_HEIGHT;
         return y;
     }
@@ -67,8 +130,6 @@ public final class HelpCard extends CardRenderer {
         y = hero(canvas, x, y, w);
         y += SECTION_GAP;
         y = commandList(canvas, x, y, w);
-        y += SECTION_GAP;
-        y = tips(canvas, x, y, w);
         return y;
     }
 
@@ -96,53 +157,47 @@ public final class HelpCard extends CardRenderer {
     private int commandList(Canvas canvas, int x, int y, int w) {
         int innerTop = sectionBar(canvas, x, y, w, "指令", "COMMANDS") + 12;
 
+        // 取一次，避免循环内重复构建
+        Item[] list = items();
         int rowH = COMMAND_ROW_HEIGHT;
-        int cardH = ITEMS.length * rowH + 16;
+        int cardH = list.length * rowH + 16;
         canvas.glassCard(x, innerTop, w, cardH, 14);
 
         float rowY = innerTop + 12;
-        for (int i = 0; i < ITEMS.length; i++) {
-            Item item = ITEMS[i];
+        for (int i = 0; i < list.length; i++) {
+            Item item = list[i];
             if (i > 0) {
                 canvas.divider(x + 18, rowY, w - 36, Theme.LINE);
             }
-            float baseY = rowY + 24;
+            float baseY = rowY + 21;
 
             // 指令名
-            canvas.text(item.command(), Theme.font(16, true), Theme.INK, x + 22, baseY);
-            float nameWidth = canvas.width(item.command(), Theme.font(16, true));
+            canvas.text(item.command(), Theme.font(15, true), Theme.INK, x + 22, baseY);
+            float nameWidth = canvas.width(item.command(), Theme.font(15, true));
+
+            // 别名（灰色小字，跟在指令名后）
+            float aliasX = x + 22 + nameWidth + 8;
+            if (item.aliases() != null && !item.aliases().isBlank()) {
+                canvas.text(item.aliases(), Theme.font(11, false),
+                        new Color(148, 163, 184, 235), aliasX, baseY);
+                aliasX += canvas.width(item.aliases(), Theme.font(11, false)) + 10;
+            }
 
             // 参数
-            canvas.text(item.args(), Theme.num(12, false), new Color(100, 116, 139, 210),
-                    x + 22 + nameWidth + 12, baseY);
+            canvas.text(item.args(), Theme.num(11, false), new Color(100, 116, 139, 210),
+                    aliasX, baseY);
 
             // 说明
-            canvas.text(item.description(), Theme.font(12, false),
-                    new Color(71, 85, 105, 230), x + 22, baseY + 22);
+            canvas.text(item.description(), Theme.font(11, false),
+                    new Color(71, 85, 105, 230), x + 22, baseY + 19);
 
             // 示例
             String example = "例：" + item.example();
-            canvas.textRight(example, Theme.font(12, false), Theme.ACCENT, x + w - 22, baseY + 6);
+            canvas.textRight(example, Theme.font(11, false), Theme.ACCENT, x + w - 22, baseY + 4);
 
             rowY += rowH;
         }
         return innerTop + cardH;
     }
 
-    private int tips(Canvas canvas, int x, int y, int w) {
-        int innerTop = sectionBar(canvas, x, y, w, "使用提示", "NOTES") + 12;
-
-        int rowH = TIP_ROW_HEIGHT;
-        int cardH = TIPS.length * rowH + 18;
-        canvas.glassCard(x, innerTop, w, cardH, 14);
-
-        float rowY = innerTop + 16;
-        for (String[] tip : TIPS) {
-            canvas.fillRound(x + 18, rowY - 12, 4, 16, 2, Theme.alpha(Theme.AMBER, 190));
-            canvas.text(tip[0], Theme.font(12, true), Theme.INK, x + 32, rowY);
-            canvas.text(tip[1], Theme.font(12, false), new Color(100, 116, 139, 220), x + 132, rowY);
-            rowY += rowH;
-        }
-        return innerTop + cardH;
-    }
 }

@@ -55,6 +55,21 @@ public final class WikiGallery {
     private static final Pattern BADGE = Pattern.compile(
             "<span class=\"badge[^\"]*\"[^>]*>(.*?)</span>", Pattern.DOTALL);
 
+    /**
+     * 另一种图鉴结构：{@code div.thumb} + {@code div.gallerytext}。
+     * <p>
+     * 表情包页面用这种布局：缩略图在 {@code thumb} 里，
+     * 名称在 {@code gallerytext} 内的 {@code <big>} 标签，描述在 {@code <small>}。
+     */
+    private static final Pattern THUMB_ITEM = Pattern.compile(
+            "<div class=\"thumb\"[^>]*>.*?<img[^>]*src=\"([^\"]+)\""
+                    + ".*?</div>\\s*</div>\\s*<div class=\"gallerytext\">(.*?)</div>",
+            Pattern.DOTALL);
+
+    /** gallerytext 里的名称。 */
+    private static final Pattern BIG_NAME = Pattern.compile(
+            "<big>(.*?)</big>", Pattern.DOTALL);
+
     /** 兜底：任何带文字的 span（部分页面没有 badge 类）。 */
     private static final Pattern CAPTION = Pattern.compile(
             "gallerygrid-captionbox[^>]*>(.*?)</div>", Pattern.DOTALL);
@@ -93,6 +108,26 @@ public final class WikiGallery {
             }
             unique.putIfAbsent(name, new Entry(name, imageUrl, fileName));
         }
+        // 再按 thumb 结构补充（表情包等页面用这种布局）
+        Matcher thumbMatcher = THUMB_ITEM.matcher(html);
+        while (thumbMatcher.find()) {
+            String imageUrl = thumbMatcher.group(1);
+            String text = thumbMatcher.group(2);
+            Matcher nameMatcher = BIG_NAME.matcher(text);
+            if (!nameMatcher.find()) {
+                continue;
+            }
+            String name = nameMatcher.group(1)
+                    .replaceAll("<[^>]+>", "")
+                    .replace("&nbsp;", " ")
+                    .replaceAll("\s+", " ")
+                    .trim();
+            if (name.isEmpty()) {
+                continue;
+            }
+            unique.putIfAbsent(name, new Entry(name, imageUrl, ""));
+        }
+
         return new ArrayList<>(unique.values());
     }
 
@@ -114,7 +149,7 @@ public final class WikiGallery {
 
     /** 页面是否像图鉴（含足够多的条目）。 */
     public static boolean looksLikeGallery(String html) {
-        return count(html, "gallerygrid-item") >= 6;
+        return count(html, "gallerygrid-item") >= 6 || count(html, "gallerytext") >= 6;
     }
 
     private static int count(String s, String sub) {

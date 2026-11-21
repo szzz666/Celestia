@@ -57,6 +57,7 @@ public final class MenuCommands {
         // 退出
         if (matches(input, "取消", "退出", "q", "exit", "cancel")) {
             MenuSession.close(group, user);
+            CardContext.clear(group, user);
             reply.text("已退出菜单。随时回复「帮助」重新打开。");
             return true;
         }
@@ -144,14 +145,8 @@ public final class MenuCommands {
                 Commands.rank(reply, "");
             }
             case GALLERY -> {
-                java.util.List<top.szzz666.KokonaCelestia.api.WikiGallery.Entry> all =
-                        top.szzz666.KokonaCelestia.api.WikiGallery.parse(
-                                WikiClient.html(item.page()));
-                int pageSize = MenuTree.GALLERY_PAGE_SIZE;
-                int from = Math.max(0, (item.index() - 1) * pageSize);
-                int to = Math.min(all.size(), from + pageSize);
-                reply.image(Renderer.render(new top.szzz666.KokonaCelestia.render.GalleryCard(
-                        item.page(), all.subList(from, to), all.size())));
+                // 统一走 GalleryCommands，顺带登记上下文
+                GalleryCommands.page(reply, item.page(), item.index());
             }
             case BGM -> {
                 List<WikiBgm.Track> tracks = WikiBgm.tracks();

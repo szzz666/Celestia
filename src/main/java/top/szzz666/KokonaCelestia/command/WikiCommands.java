@@ -160,7 +160,7 @@ public final class WikiCommands {
                 return;
             }
             if (arg.isEmpty()) {
-                reply.image(Renderer.render(new BgmCard(tracks, 1, BGM_PAGE_SIZE)));
+                BgmCommands.list(reply);
                 return;
             }
 

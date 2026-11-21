@@ -64,6 +64,9 @@ public class MyConfig {
     @ConfigItem(key = "command.wallpaper", comment = "壁纸指令名")
     public static List<String> wallpaperCommands = List.of("壁纸");
 
+    @ConfigItem(key = "command.randomWallpaper", comment = "随机壁纸指令名")
+    public static List<String> randomWallpaperCommands = List.of("随机壁纸", "来张壁纸");
+
     @ConfigItem(key = "command.emoji", comment = "表情包指令名")
     public static List<String> emojiCommands = List.of("表情包", "表情");
 

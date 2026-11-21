@@ -33,7 +33,7 @@ public final class BgmCard extends CardRenderer {
 
     @Override
     protected String footerNote() {
-        return "曲目来自 biligame 卡拉彼丘 WIKI。发送「BGM 序号」即可点播，例如：BGM 1";
+        return "回复序号即可点播（也可发「BGM 5」）· 共 165 首 · 来源 biligame WIKI";
     }
 
     private int totalPages() {

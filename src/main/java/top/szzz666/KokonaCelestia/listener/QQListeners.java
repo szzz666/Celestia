@@ -1,6 +1,10 @@
 package top.szzz666.KokonaCelestia.listener;
 
+import top.szzz666.KokonaCelestia.command.BgmCommands;
+import top.szzz666.KokonaCelestia.command.CardContext;
 import top.szzz666.KokonaCelestia.command.Commands;
+import top.szzz666.KokonaCelestia.command.GalleryCommands;
+import top.szzz666.KokonaCelestia.command.WallpaperCommands;
 import top.szzz666.KokonaCelestia.command.MenuCommands;
 import top.szzz666.KokonaCelestia.command.MenuSession;
 import top.szzz666.KokonaCelestia.command.PendingSelection;
@@ -46,15 +50,22 @@ public class QQListeners {
             return;
         }
 
-        // 菜单会话优先：进行中的菜单会消费序号、返回、取消
+        // 数字归属的优先级（越靠前越优先）：
+        //   1. 同名玩家选择 —— 用户刚查了玩家，正等着挑人，必须最先响应
+        //   2. 菜单会话    —— 用户正在逐层浏览
+        //   3. 卡片上下文  —— 用户刚看了 BGM / 壁纸 / 图鉴列表
+        // 否则一个残留的卡片上下文会把「选玩家」的数字抢走。
+        if (handleSelection(event, trimmed)) {
+            applyText(event, "");
+            return;
+        }
+
         if (handleMenu(event, trimmed)) {
             applyText(event, "");
             return;
         }
 
-        // 有待选状态时优先消费用户回复的序号
-        if (handleSelection(event, trimmed)) {
-            // 已处理完毕，清空文本避免再被框架当成指令解析
+        if (handleBareNumber(event, trimmed)) {
             applyText(event, "");
             return;
         }
@@ -69,6 +80,48 @@ public class QQListeners {
             return;
         }
         applyText(event, rewritten);
+    }
+
+    /**
+     * 处理「裸数字」：作用于用户最近查看的卡片。
+     * <p>
+     * 菜单、BGM、壁纸都带序号，此前只有菜单支持直接回数字，
+     * BGM 要发「BGM 1」、壁纸要发「壁纸 1」，操作习惯不统一。
+     * 这里统一为：看完任何带序号的图，直接回数字即可。
+     * 带命令的写法（「BGM 1」「壁纸 1」）仍然有效。
+     *
+     * @return 是否由上下文接管
+     */
+    private static boolean handleBareNumber(Event event, String text) {
+        if (!text.matches("\\d{1,3}")) {
+            return false;
+        }
+        long groupId = event.isGroupMessage() ? event.getGroup_id() : 0L;
+        long userId = event.getUser_id();
+        CardContext.Entry ctx = CardContext.get(groupId, userId);
+        if (ctx == null) {
+            return false;
+        }
+        // 菜单有自己的会话状态，交给它处理
+        if (ctx.kind() == CardContext.Kind.MENU) {
+            return false;
+        }
+        TaskUtil.Async(() -> {
+            Reply reply = Reply.of(event);
+            try {
+                int index = Integer.parseInt(text);
+                CardContext.touch(groupId, userId);
+                switch (ctx.kind()) {
+                    case BGM -> BgmCommands.play(reply, index);
+                    case WALLPAPER -> WallpaperCommands.play(reply, index);
+                    case GALLERY -> GalleryCommands.page(reply, ctx.page(), index);
+                    default -> { }
+                }
+            } catch (Exception e) {
+                reply.text("操作失败，请重新查看列表后再试。");
+            }
+        });
+        return true;
     }
 
     /**
@@ -101,7 +154,7 @@ public class QQListeners {
 
     /** 是否为菜单导航输入（序号 / 返回 / 取消）。 */
     private static boolean isMenuInput(String text) {
-        if (text.matches("\\d{1,2}")) {
+        if (text.matches("\\d{1,3}")) {
             return true;
         }
         for (String word : new String[]{"返回", "上一级", "back", "b", "0",

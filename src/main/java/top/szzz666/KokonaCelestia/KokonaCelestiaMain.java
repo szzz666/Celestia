@@ -1,8 +1,11 @@
 package top.szzz666.KokonaCelestia;
 
+import top.szzz666.KokonaCelestia.command.BgmCommands;
+import top.szzz666.KokonaCelestia.command.CardContext;
 import top.szzz666.KokonaCelestia.command.Commands;
 import top.szzz666.KokonaCelestia.command.MenuCommands;
 import top.szzz666.KokonaCelestia.command.WikiCommands;
+import top.szzz666.KokonaCelestia.command.WallpaperCommands;
 import top.szzz666.KokonaCelestia.command.WikiDirect;
 import top.szzz666.KokonaCelestia.listener.QQListeners;
 import top.szzz666.KokonaCelestia.config.MyConfig;
@@ -114,11 +117,22 @@ public class KokonaCelestiaMain extends PluginBase {
                 "点播 BGM：BGM 查看曲目，BGM 序号/曲名 播放", "卡丘战绩", PERM_ALL, SCOPE_BOTH,
                 (event, name, args) -> {
                     String argument = String.join(" ", args);
-                    async(event, reply -> WikiCommands.bgm(reply, argument));
+                    async(event, reply -> BgmCommands.handle(reply, argument));
                 });
         // 菜单能到达的每个页面都有直达指令，知道要查什么时不必逐层点选。
         // 参数为页码（图鉴页）或章节序号（其他页面）。
-        registerWiki("壁纸", "官方壁纸", MyConfig.wallpaperCommands);
+        // 壁纸单独实现：带序号取原图，带「随机」随机发一张
+        CommandManage.register(names(MyConfig.wallpaperCommands, "壁纸"),
+                "查看壁纸：壁纸 看列表，壁纸 3 看原图，壁纸 随机 随机一张",
+                "卡丘战绩", PERM_ALL, SCOPE_BOTH,
+                (event, name, args) -> {
+                    String argument = String.join(" ", args);
+                    async(event, reply -> WallpaperCommands.show(reply, argument));
+                });
+
+        CommandManage.register(names(MyConfig.randomWallpaperCommands, "随机壁纸"),
+                "随机发送一张官方壁纸", "卡丘战绩", PERM_ALL, SCOPE_BOTH,
+                (event, name, args) -> async(event, WallpaperCommands::random));
         registerWiki("表情包", "官方表情包", MyConfig.emojiCommands);
         registerWiki("勋章", "勋章", MyConfig.medalCommands);
         registerWiki("喷漆", "喷漆", MyConfig.sprayCommands);
@@ -214,6 +228,14 @@ public class KokonaCelestiaMain extends PluginBase {
      * 也避免与框架的线程池策略冲突。
      */
     private static void async(Event event, java.util.function.Consumer<Reply> task) {
+        // 用户发了新指令，说明注意力已转移：清掉旧的卡片上下文，
+        // 避免此后回数字还作用于上一张列表。
+        try {
+            long groupId = event.isGroupMessage() ? event.getGroup_id() : 0L;
+            CardContext.clear(groupId, event.getUser_id());
+        } catch (Exception ignored) {
+            // 清理失败不影响主流程
+        }
         TaskUtil.Async(() -> {
             Reply reply = Reply.of(event);
             try {

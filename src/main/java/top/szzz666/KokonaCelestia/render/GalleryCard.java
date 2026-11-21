@@ -49,7 +49,7 @@ public final class GalleryCard extends CardRenderer {
     protected String footerNote() {
         // 条目本身不可点选（图鉴数量太多，逐个编号没有意义），
         // 分页通过上一层的菜单序号切换，这里只说明当前页范围
-        return "共 " + total + " 个条目 · 翻页请回复「返回」后选择其他页码";
+        return "共 " + total + " 个条目 · 回复页码切换分页 · 回复「返回」上一层";
     }
 
     @Override

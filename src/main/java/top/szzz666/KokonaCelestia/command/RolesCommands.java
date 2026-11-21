@@ -20,7 +20,7 @@ public final class RolesCommands {
         String arg = argument == null ? "" : argument.trim();
         // 实测首次查询要 36 秒（要拉 24 个角色头像与 6 张地图缩略图），
         // 素材缓存后约 2 秒；先给提示，避免长时间无响应
-        reply.text("请稍等…");
+        reply.text("请稍候…");
         try {
             RolesClient.Snapshot data = RolesClient.fetch();
             if (data.roles().isEmpty() && data.maps().isEmpty()) {

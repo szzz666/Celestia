@@ -237,7 +237,7 @@ public final class Commands {
         if (!refresh) {
             // 实测首次查询要 8 秒左右（拉头像、立绘、地图缩略图），
             // 素材缓存后约 3-4 秒；先给一句提示，避免用户以为没收到指令
-            reply.text("请稍等…");
+            reply.text("请稍候…");
             raw = DakanuClient.summoner(target.playerId());
         } else {
             // 先用缓存判断隐私状态：隐私玩家刷新也拿不到新数据，不必让用户空等

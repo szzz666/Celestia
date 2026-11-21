@@ -1,5 +1,6 @@
 package top.szzz666.KokonaCelestia.api;
 
+import top.szzz666.KokonaCelestia.util.MapCatalog;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -127,7 +128,7 @@ public final class RolesClient {
                     defense = lineup;
                 }
             }
-            maps.add(new MapStat(mapId, mapName(mapId),
+            maps.add(new MapStat(mapId, MapCatalog.name(mapId),
                     DakanuClient.optInt(m, "games", 0),
                     DakanuClient.optDouble(m, "winRate", 0), attack, defense));
         }
@@ -136,14 +137,4 @@ public final class RolesClient {
         return new Snapshot(covered, day, roles, maps);
     }
 
-    /** 地图名（与站点 mapNames 表一致）。 */
-    static String mapName(int mapId) {
-        String[] names = {
-                "404基地", "88区", "欧拉港口", "风曳镇", "空间实验室", "柯西街区", "科斯迷特",
-                "2号仓库", "鹿鹿潮玩区", "水下发电厂", "码头小镇", "花明弓道馆", "离境区",
-                "亚克萨工厂", "簌雪东区", "洛希街区", "迦纳古城", "极地研究所", "奥卡努斯", "莱布伦城"
-        };
-        int index = mapId - 201;
-        return index >= 0 && index < names.length ? names[index] : "地图 " + mapId;
-    }
 }

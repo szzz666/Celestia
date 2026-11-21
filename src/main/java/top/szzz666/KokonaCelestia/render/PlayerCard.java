@@ -533,7 +533,7 @@ public final class PlayerCard extends CardRenderer {
         canvas.text(match.myScore() + " : " + match.opponentScore(), Theme.num(21, true),
                 Theme.INK, x + 16, y + 56);
 
-        canvas.textRight(Theme.mapName(match.mapId(), match.modeLabel()), Theme.font(13, true), Theme.INK,
+        canvas.textRight(Theme.mapName(match.mapId()), Theme.font(13, true), Theme.INK,
                 x + w - 16, y + 52);
         canvas.textRight(match.modeLabel() + " · " + formatTime(match.playedAt()),
                 Theme.font(11, false), new Color(100, 116, 139, 220), x + w - 16, y + 70);

@@ -155,7 +155,7 @@ public final class MatchCard extends CardRenderer {
         // 中间信息块
         float midX = x + 226;
         canvas.text("地图", Theme.font(12, false), new Color(100, 116, 139, 220), midX, y + 34);
-        canvas.text(Theme.mapName(mapId, modeLabel()), Theme.font(16, true), Theme.INK, midX, y + 58);
+        canvas.text(Theme.mapName(mapId), Theme.font(16, true), Theme.INK, midX, y + 58);
 
         canvas.text("对局模式", Theme.font(12, false), new Color(100, 116, 139, 220), midX, y + 86);
         canvas.text(modeLabel(), Theme.font(13, true), new Color(71, 85, 105), midX, y + 108);

@@ -2,7 +2,7 @@
 
 在 QQ 群聊中直接发送指令，查询《卡拉彼丘》的战绩、排行榜、游戏资料与福利信息，全部以图片返回。
 
-* **框架**：[Kokona](https://github.com/szzzz666/Kokona)（Java 21 / OneBot 11）
+* **框架**：[Kokona](https://github.com/szzz666/Kokona)（Java 21 / OneBot 11）
 * **数据来源**：Dakanu（战绩）+  biligame 卡拉彼丘 WIKI（资料）
 * **触发方式**：群聊直接发送，无需 @机器人
 

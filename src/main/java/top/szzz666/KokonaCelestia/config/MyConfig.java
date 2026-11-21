@@ -67,15 +67,6 @@ public class MyConfig {
     @ConfigItem(key = "command.emoji", comment = "表情包指令名")
     public static List<String> emojiCommands = List.of("表情包", "表情");
 
-    @ConfigItem(key = "command.comic", comment = "四格漫画指令名")
-    public static List<String> comicCommands = List.of("四格漫画", "漫画");
-
-    @ConfigItem(key = "command.collab", comment = "联动指令名")
-    public static List<String> collabCommands = List.of("联动");
-
-    @ConfigItem(key = "command.merch", comment = "相关周边指令名")
-    public static List<String> merchCommands = List.of("周边", "相关周边");
-
     @ConfigItem(key = "command.medal", comment = "勋章指令名")
     public static List<String> medalCommands = List.of("勋章");
 

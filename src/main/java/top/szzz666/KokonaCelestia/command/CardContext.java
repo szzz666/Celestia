@@ -29,19 +29,28 @@ public final class CardContext {
         /** 壁纸条目：序号取原图。 */
         WALLPAPER,
         /** 图鉴分页：序号切换页码。 */
-        GALLERY
+        GALLERY,
+        /** 玩家卡片的最近战绩：序号查看该场对局详情。 */
+        MATCH
     }
 
     /**
      * 一条上下文。
      *
      * @param kind      卡片类型
-     * @param page      关联页面（壁纸 / 图鉴用）
+     * @param page      关联标识（壁纸 / 图鉴为页面名，最近战绩为玩家 ID）
      * @param pageNo    当前页码（图鉴用）
      * @param size      条目数，用于校验序号范围
      * @param touchedAt 最后操作时间
+     * @param rooms     最近战绩的对局号列表（仅 MATCH 用），按图上序号排列
      */
-    public record Entry(Kind kind, String page, int pageNo, int size, long touchedAt) {
+    public record Entry(Kind kind, String page, int pageNo, int size, long touchedAt,
+                        java.util.List<String> rooms) {
+
+        /** 兼容不带对局列表的构造。 */
+        public Entry(Kind kind, String page, int pageNo, int size, long touchedAt) {
+            this(kind, page, pageNo, size, touchedAt, java.util.List.of());
+        }
     }
 
     private static String key(long groupId, long userId) {
@@ -54,6 +63,24 @@ public final class CardContext {
         purge();
         CONTEXTS.put(key(groupId, userId),
                 new Entry(kind, page, pageNo, size, System.currentTimeMillis()));
+    }
+
+    /**
+     * 登记最近战绩的对局列表。
+     * <p>
+     * 玩家卡片上的最近战绩带 1-10 的序号，用户回这个数字即可查看对应对局，
+     * 因此需要把「序号 → 对局号」记下来。玩家 ID 也一并存下，
+     * 回序号时直接查对局详情，不必再搜一次昵称。
+     *
+     * @param playerId 玩家 ID，用于回查档案
+     * @param rooms    对局号列表，顺序与图上序号一致
+     */
+    public static void rememberMatches(long groupId, long userId, String playerId,
+                                       java.util.List<String> rooms) {
+        purge();
+        CONTEXTS.put(key(groupId, userId),
+                new Entry(Kind.MATCH, playerId, 1, rooms.size(),
+                        System.currentTimeMillis(), java.util.List.copyOf(rooms)));
     }
 
     /** 取上下文；不存在或已过期返回 null。 */
@@ -75,7 +102,7 @@ public final class CardContext {
         if (entry != null) {
             CONTEXTS.put(key(groupId, userId),
                     new Entry(entry.kind(), entry.page(), entry.pageNo(),
-                            entry.size(), System.currentTimeMillis()));
+                            entry.size(), System.currentTimeMillis(), entry.rooms()));
         }
     }
 

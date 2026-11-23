@@ -59,6 +59,10 @@ public final class Commands {
             return;
         }
 
+        // 提示必须在任何网络请求之前发出：搜索昵称本身要 1-2 秒，
+        // 放在后面会让用户先看到一两秒无响应，才有了「要等一会才回复」的感觉。
+        reply.text(refresh ? "正在获取最新数据，请稍候…" : "请稍候…");
+
         try {
             List<DakanuClient.PlayerSuggestion> list = DakanuClient.search(keyword);
             if (list.isEmpty()) {
@@ -235,9 +239,6 @@ public final class Commands {
         JsonObject raw;
 
         if (!refresh) {
-            // 实测首次查询要 8 秒左右（拉头像、立绘、地图缩略图），
-            // 素材缓存后约 3-4 秒；先给一句提示，避免用户以为没收到指令
-            reply.text("请稍候…");
             raw = DakanuClient.summoner(target.playerId());
         } else {
             // 先用缓存判断隐私状态：隐私玩家刷新也拿不到新数据，不必让用户空等
@@ -249,9 +250,6 @@ public final class Commands {
                 reply.image(Renderer.render(new PlayerCard(cached)));
                 return;
             }
-
-            // 先提示再等待：刷新耗时 20-40 秒，没有提示用户会以为消息丢了
-            reply.text("正在获取「" + cached.nickname() + "」的最新数据，请稍候…");
 
             try {
                 raw = DakanuClient.summonerRefresh(target.playerId());
@@ -266,6 +264,20 @@ public final class Commands {
 
         PlayerProfile profile = PlayerProfile.from(raw);
         reply.image(Renderer.render(new PlayerCard(profile)));
+
+        // 卡片上的最近战绩带 1-10 序号，登记「序号 → 对局号」，
+        // 用户回数字即可查看该场详情，不必再打「看看对局 昵称 对局号」。
+        List<String> rooms = new ArrayList<>();
+        for (PlayerProfile.Match match : profile.recentMatches()) {
+            if (rooms.size() >= 10) {
+                break;
+            }
+            rooms.add(match.roomId());
+        }
+        if (!rooms.isEmpty()) {
+            CardContext.rememberMatches(reply.groupId(), reply.userId(),
+                    profile.playerId(), rooms);
+        }
     }
 
     /** 把数据年龄说成「N 天前」这类更好懂的说法。 */
@@ -285,7 +297,25 @@ public final class Commands {
 
     private static void renderMatch(Reply reply, DakanuClient.PlayerSuggestion target,
                                     String roomToken) throws Exception {
-        JsonObject summoner = DakanuClient.summoner(target.playerId());
+        renderMatchById(reply, target.playerId(), roomToken);
+    }
+
+    /**
+     * 按玩家 ID + 对局号出图。
+     * <p>
+     * 供「回序号看对局」使用：序号对应的对局号已知，不必再搜一次昵称。
+     */
+    public static void matchById(Reply reply, String playerId, String roomToken) {
+        try {
+            renderMatchById(reply, playerId, roomToken);
+        } catch (Exception e) {
+            reply.text("查询失败：" + friendly(e));
+        }
+    }
+
+    private static void renderMatchById(Reply reply, String playerId, String roomToken)
+            throws Exception {
+        JsonObject summoner = DakanuClient.summoner(playerId);
         PlayerProfile profile = PlayerProfile.from(summoner);
         MatchRef matched = resolveMatch(profile, roomToken);
         if (matched == null) {

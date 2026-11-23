@@ -472,13 +472,13 @@ public final class PlayerCard extends CardRenderer {
         for (int i = 0; i < total; i++) {
             float cx = x + (i % 2) * (cardW + gap);
             float cy = innerTop + (i / 2) * (cardH + rowGap);
-            matchCard(canvas, matches.get(i), cx, cy, cardW, cardH);
+            matchCard(canvas, matches.get(i), i + 1, cx, cy, cardW, cardH);
         }
         return innerTop + rows * cardH + (rows - 1) * rowGap;
     }
 
-    private void matchCard(Canvas canvas, PlayerProfile.Match match, float x, float y,
-                           float w, float h) {
+    private void matchCard(Canvas canvas, PlayerProfile.Match match, int index,
+                           float x, float y, float w, float h) {
         boolean win = "win".equals(match.result());
         boolean draw = !win && !"lose".equals(match.result());
         Color accent = draw ? Theme.MUTED : (win ? Theme.WIN : Theme.LOSE);
@@ -509,13 +509,22 @@ public final class PlayerCard extends CardRenderer {
         g.setStroke(new BasicStroke(1.2f));
         g.draw(shape);
 
+        // 序号徽标：用户回这个数字就能看这场的详情（序号 1 起）
+        float badgeSize = 18;
+        float badgeX = x + 14;
+        float badgeY = y + 14;
+        canvas.fillRound(badgeX, badgeY, badgeSize, badgeSize, 5, Theme.alpha(accent, 42));
+        canvas.textCenter(String.valueOf(index), Theme.num(11, true), accent,
+                badgeX + badgeSize / 2f, badgeY + 13);
+
         // 第一行：结果 + MVP/SVP + 段位分变化
         float topY = y + 26;
         Font resultFont = Theme.font(13, true);
         String resultLabel = draw ? "平局" : (win ? "胜利" : "失败");
-        canvas.text(resultLabel, resultFont, accent, x + 16, topY);
+        float resultX = x + 16 + badgeSize + 8;
+        canvas.text(resultLabel, resultFont, accent, resultX, topY);
 
-        float tagX = x + 16 + canvas.width(resultLabel, resultFont) + 8;
+        float tagX = resultX + canvas.width(resultLabel, resultFont) + 8;
         if (match.mvp()) {
             canvas.chip("MVP", Theme.num(9, true), new Color(176, 126, 18),
                     new Color(255, 228, 154, 220), new Color(232, 182, 62, 200), tagX, topY - 12, 6, 17);
@@ -539,8 +548,10 @@ public final class PlayerCard extends CardRenderer {
                 Theme.font(11, false), new Color(100, 116, 139, 220), x + w - 16, y + 70);
 
         // 第三行：角色 + KDA
-        canvas.circleAvatar(Assets.rolePortrait(match.roleId()), x + 32, y + h - 32, 32);
-        float nx = x + 54;
+        // 头像改为 28、上移 4px：原来直径 32 时底边落在 y+h-16，
+        // 而底部「时长」文字顶部约在 y+h-18，两者会压在一起。
+        canvas.circleAvatar(Assets.rolePortrait(match.roleId()), x + 30, y + h - 36, 28);
+        float nx = x + 50;
         canvas.text(Theme.ellipsis(roleName(match.roleId()),
                         canvas.fm(Theme.font(12, true)), 70),
                 Theme.font(12, true), Theme.INK, nx, y + h - 28);
@@ -554,9 +565,9 @@ public final class PlayerCard extends CardRenderer {
 
         // 第四行：时长 + 对局号
         canvas.text("时长 " + duration(match.durationSeconds()), Theme.font(10, false),
-                new Color(100, 116, 139, 190), x + 16, y + h - 8);
+                new Color(100, 116, 139, 190), x + 16, y + h - 6);
         canvas.textRight("ROOM " + match.roomId(), Theme.num(9, false),
-                new Color(100, 116, 139, 175), x + w - 16, y + h - 8);
+                new Color(100, 116, 139, 175), x + w - 16, y + h - 6);
     }
 
     // ==================== 工具 ====================

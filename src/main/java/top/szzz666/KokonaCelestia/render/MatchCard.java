@@ -70,7 +70,7 @@ public final class MatchCard extends CardRenderer {
 
     @Override
     protected int layoutHeight() {
-        List<Team> teams = teams();
+        List<Team> teams = displayTeams();
         int y = HEADER_HEIGHT;
         y += HEADER_HEIGHT_BOX + SECTION_GAP;
         for (Team team : teams) {
@@ -88,12 +88,16 @@ public final class MatchCard extends CardRenderer {
         int w = Theme.WIDTH - Theme.MARGIN * 2;
         int y = top;
 
-        List<Team> teams = teams();
+        List<Team> teams = displayTeams();
         y = header(canvas, x, y, w, teams);
         y += SECTION_GAP;
 
+        // 双方胜负是否真的不同；生化模式里全部玩家都是 win，标「胜方」会误导
+        long winCount = teams.stream().filter(Team::win).count();
+        boolean definite = winCount > 0 && winCount < teams.size();
+
         for (Team team : teams) {
-            y = teamTable(canvas, x, y, w, team);
+            y = teamTable(canvas, x, y, w, team, definite);
             y += TEAM_GAP;
         }
         return y;
@@ -132,19 +136,48 @@ public final class MatchCard extends CardRenderer {
         g.setStroke(new BasicStroke(1.1f));
         g.draw(shape);
 
-        // 胜负判定
-        Team winner = null;
-        for (Team team : teams) {
-            if (team.win()) {
-                winner = team;
+        // 胜负以「被查询玩家」为准，而不是「这场有没有赢家」。
+        // 早先按队伍里是否存在 win 来判定，导致查谁都显示「胜利」——
+        // 输的那一方明明在败方阵营里，标题却是胜利。
+        String viewerResult = summary == null ? "" : summary.result();
+        boolean viewerWin = "win".equalsIgnoreCase(viewerResult);
+        boolean viewerLose = "lose".equalsIgnoreCase(viewerResult);
+        boolean viewerDraw = "draw".equalsIgnoreCase(viewerResult)
+                || "tie".equalsIgnoreCase(viewerResult);
+
+        // 摘要缺失时退回到「在队伍里按昵称找这个玩家」
+        if (!viewerWin && !viewerLose && !viewerDraw) {
+            for (Team team : teams) {
+                for (JsonObject player : team.players()) {
+                    if (playerName != null && playerName.equals(
+                            DakanuClient.optString(player, "nickname", ""))) {
+                        viewerWin = team.win();
+                        viewerLose = !team.win();
+                        break;
+                    }
+                }
             }
         }
-        boolean hasResult = winner != null;
-        Color accent = !hasResult ? Theme.MUTED : Theme.WIN;
+
+        String headline;
+        Color accent;
+        if (viewerWin) {
+            headline = "胜利";
+            accent = Theme.WIN;
+        } else if (viewerLose) {
+            headline = "失败";
+            accent = Theme.LOSE;
+        } else if (viewerDraw) {
+            headline = "平局";
+            accent = Theme.MUTED;
+        } else {
+            headline = "对局详情";
+            accent = Theme.MUTED;
+        }
 
         canvas.text(playerName == null || playerName.isBlank() ? "对局" : playerName,
                 Theme.font(12, false), new Color(100, 116, 139, 220), x + 26, y + 34);
-        canvas.text(hasResult ? "胜利" : "对局详情", Theme.font(27, true), accent, x + 26, y + 68);
+        canvas.text(headline, Theme.font(27, true), accent, x + 26, y + 68);
 
         // 比分
         if (summary != null) {
@@ -175,11 +208,19 @@ public final class MatchCard extends CardRenderer {
         return y + h;
     }
 
-    /** 单支队伍的战绩表。 */
-    private int teamTable(Canvas canvas, int x, int y, int w, Team team) {
-        String note = team.players().size() + " 名队员";
-        int innerTop = sectionBar(canvas, x, y, w,
-                team.label() + "（" + (team.win() ? "胜方" : "败方") + "）", note) + 12;
+    /**
+     * 单支队伍的战绩表。
+     *
+     * @param definite 双方胜负是否可区分。生化等模式里 API 会把所有玩家都标成 win，
+     *                 此时两个阵营都会是「胜方」，标注反而误导，因此干脆不标
+     */
+    private int teamTable(Canvas canvas, int x, int y, int w, Team team, boolean definite) {
+        String note = team.players().size()
+                + (team.label().startsWith("全部") ? " 名玩家" : " 名队员");
+        String title = definite
+                ? team.label() + "（" + (team.win() ? "胜方" : "败方") + "）"
+                : team.label();
+        int innerTop = sectionBar(canvas, x, y, w, title, note) + 12;
 
         int headerH = TEAM_HEADER_HEIGHT;
         int rowH = TEAM_ROW_HEIGHT;
@@ -197,7 +238,7 @@ public final class MatchCard extends CardRenderer {
         canvas.divider(x + 16, headY + 9, w - 32, Theme.LINE);
 
         float rowY = headY + 30;
-        Color teamAccent = team.win() ? Theme.WIN : Theme.LOSE;
+        Color teamAccent = definite ? (team.win() ? Theme.WIN : Theme.LOSE) : Theme.ACCENT;
 
         for (int i = 0; i < team.players().size(); i++) {
             JsonObject player = team.players().get(i);
@@ -247,6 +288,40 @@ public final class MatchCard extends CardRenderer {
         }
 
         return innerTop + cardH;
+    }
+
+    /**
+     * 是否属于「没有阵营之分」的模式。
+     * <p>
+     * 生化模式（{@code RoomMode_ZOMBIE}）里所有玩家共享同一个结果，没有对抗双方；
+     * 站点接口仍按「阵营 1 / 阵营 2」返回，直接照搬会让人误以为是一般的对抗局。
+     */
+    private boolean noCamps(List<Team> raw) {
+        String mode = DakanuClient.optString(detail, "matchMode", "");
+        if (mode.toUpperCase().contains("ZOMBIE")) {
+            return true;
+        }
+        if (raw.size() < 2) {
+            return false;
+        }
+        boolean same = raw.stream().allMatch(t -> t.win() == raw.get(0).win());
+        String label = modeLabel();
+        return same && (label == null || !label.contains("爆破"));
+    }
+
+    /** 实际展示用的分组：无阵营模式合并成一张总表。 */
+    private List<Team> displayTeams() {
+        List<Team> raw = teams();
+        if (!noCamps(raw)) {
+            return raw;
+        }
+        List<JsonObject> all = new ArrayList<>();
+        for (Team team : raw) {
+            all.addAll(team.players());
+        }
+        all.sort(Comparator.comparingInt((JsonObject p) ->
+                DakanuClient.optInt(p, "score", 0)).reversed());
+        return List.of(new Team("全部玩家", all, false));
     }
 
     private List<Team> teams() {

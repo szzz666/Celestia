@@ -115,6 +115,15 @@ public class QQListeners {
                     case BGM -> BgmCommands.play(reply, index);
                     case WALLPAPER -> WallpaperCommands.play(reply, index);
                     case GALLERY -> GalleryCommands.page(reply, ctx.page(), index);
+                    case MATCH -> {
+                        // 玩家卡片最近战绩的序号：直接取对应对局号出详情
+                        if (index < 1 || index > ctx.rooms().size()) {
+                            reply.text("对局序号范围是 1 - " + ctx.rooms().size()
+                                    + "，重新发送「看看」可刷新列表。");
+                        } else {
+                            Commands.matchById(reply, ctx.page(), ctx.rooms().get(index - 1));
+                        }
+                    }
                     default -> { }
                 }
             } catch (Exception e) {

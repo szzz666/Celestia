@@ -31,6 +31,7 @@ src/main/java/top/szzz666/KokonaCelestia/api/WikiClient.java
 src/main/java/top/szzz666/KokonaCelestia/api/DakanuClient.java
 src/main/java/top/szzz666/KokonaCelestia/api/WikiWallpaper.java
 src/main/java/top/szzz666/KokonaCelestia/api/WikiGallery.java
+src/main/java/top/szzz666/KokonaCelestia/command/BotCardRegistry.java
 src/main/java/top/szzz666/KokonaCelestia/command/PendingSelection.java
 src/main/java/top/szzz666/KokonaCelestia/command/WikiCommands.java
 src/main/java/top/szzz666/KokonaCelestia/command/RolesCommands.java

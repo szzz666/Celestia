@@ -1,6 +1,7 @@
 package top.szzz666.KokonaCelestia.listener;
 
 import top.szzz666.KokonaCelestia.command.BgmCommands;
+import top.szzz666.KokonaCelestia.command.BotCardRegistry;
 import top.szzz666.KokonaCelestia.command.CardContext;
 import top.szzz666.KokonaCelestia.command.Commands;
 import top.szzz666.KokonaCelestia.command.GalleryCommands;
@@ -92,12 +93,58 @@ public class QQListeners {
      *
      * @return 是否由上下文接管
      */
+
+    /**
+     * 取出本条消息引用的消息 id。
+     * <p>
+     * QQ 回复消息的 message 段里会有一个 {@code reply} 段，其 {@code data.id}
+     * 就是被引用消息的 id；没有引用时返回 0。
+     */
+    private static long quotedMessageId(Event event) {
+        List<Message> messages = event.getMessage();
+        if (messages == null) {
+            return 0L;
+        }
+        for (Message message : messages) {
+            if (!"reply".equals(message.getType())) {
+                continue;
+            }
+            MessageData data = message.getData();
+            if (data == null) {
+                continue;
+            }
+            try {
+                return data.getId();
+            } catch (RuntimeException e) {
+                return 0L;
+            }
+        }
+        return 0L;
+    }
+
     private static boolean handleBareNumber(Event event, String text) {
         if (!text.matches("\\d{1,3}")) {
             return false;
         }
         long groupId = event.isGroupMessage() ? event.getGroup_id() : 0L;
         long userId = event.getUser_id();
+
+        // 用户引用了某张卡片：按那张卡片自己的列表解析，而不是最新一张。
+        // 这样即使之后又发了别的卡片，回翻引用旧图仍然正确。
+        long quoted = quotedMessageId(event);
+        BotCardRegistry.Card quotedCard = quoted > 0 ? BotCardRegistry.get(quoted) : null;
+        if (quotedCard != null) {
+            int index = Integer.parseInt(text);
+            if (index >= 1 && index <= quotedCard.rooms().size()) {
+                TaskUtil.Async(() -> Commands.matchById(Reply.of(event),
+                        quotedCard.playerId(), quotedCard.rooms().get(index - 1)));
+                return true;
+            }
+            TaskUtil.Async(() -> Reply.of(event).text(
+                    "对局序号范围是 1 - " + quotedCard.rooms().size() + "。"));
+            return true;
+        }
+
         CardContext.Entry ctx = CardContext.get(groupId, userId);
         if (ctx == null) {
             return false;

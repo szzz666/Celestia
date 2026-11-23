@@ -54,6 +54,29 @@ public final class Reply {
     }
 
     /**
+     * 发图并回调自身消息 ID。
+     * <p>
+     * 用于需要「知道这张图是哪条消息」的场景：用户引用图片回复序号时，
+     * 只能从被引用消息的 id 反查是哪张卡片。
+     *
+     * @param onMessageId 回调参数为 message_id，失败或超时为 -1
+     */
+    public void imageWithId(String base64, java.util.function.LongConsumer onMessageId) {
+        top.szzz666.qq.send.Params params = MsgBuilder.builder().image(base64).build();
+        if (event.isGroupMessage()) {
+            event.getQq_bot().sendGroupMsgWithId(event.getGroup_id(), params, onMessageId);
+            return;
+        }
+        if (event.isPrivateMessage()) {
+            event.getQq_bot().sendPrivateMsgWithId(event.getUser_id(), params, onMessageId);
+            return;
+        }
+        if (onMessageId != null) {
+            onMessageId.accept(-1L);
+        }
+    }
+
+    /**
      * 发送音频（语音消息）。
      * <p>
      * 传入 http(s) 直链时由 OneBot 实现自行拉取，无需先下载到本地。

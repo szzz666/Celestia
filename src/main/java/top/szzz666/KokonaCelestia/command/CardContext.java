@@ -14,7 +14,14 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public final class CardContext {
 
-    private static final long TTL_MS = 180_000L;
+    /**
+     * 上下文有效期。
+     * <p>
+     * 原来只有 3 分钟：用户看完图、想一会儿再回去发序号，上下文已经过期，
+     * 表现为「只能查一次」。这里放宽到 15 分钟。
+     * 残留上下文不会误伤——用户一旦发送新的指令，{@code async()} 会立即清掉它。
+     */
+    private static final long TTL_MS = 900_000L;
     private static final Map<String, Entry> CONTEXTS = new ConcurrentHashMap<>();
 
     private CardContext() {

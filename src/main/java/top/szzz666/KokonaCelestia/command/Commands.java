@@ -93,6 +93,23 @@ public final class Commands {
             return;
         }
 
+        // 「看看对局 4」：纯数字当作玩家卡片最近战绩的序号。
+        // 给一个不依赖「裸数字」的显式入口，回复消息引用图片时也能用。
+        if (rest.matches("\\d{1,3}")) {
+            CardContext.Entry ctx = CardContext.get(reply.groupId(), reply.userId());
+            if (ctx == null || ctx.kind() != CardContext.Kind.MATCH) {
+                reply.text("请先发送「看看 玩家昵称」查看玩家卡片，卡片上的最近战绩带序号。");
+                return;
+            }
+            int index = Integer.parseInt(rest);
+            if (index < 1 || index > ctx.rooms().size()) {
+                reply.text("对局序号范围是 1 - " + ctx.rooms().size() + "。");
+                return;
+            }
+            matchById(reply, ctx.page(), ctx.rooms().get(index - 1));
+            return;
+        }
+
         // 对局号固定在最后一段，昵称可以含空格
         String[] parts = rest.split("\\s+");
         if (parts.length < 2) {
@@ -263,7 +280,6 @@ public final class Commands {
         }
 
         PlayerProfile profile = PlayerProfile.from(raw);
-        reply.image(Renderer.render(new PlayerCard(profile)));
 
         // 卡片上的最近战绩带 1-10 序号，登记「序号 → 对局号」，
         // 用户回数字即可查看该场详情，不必再打「看看对局 昵称 对局号」。
@@ -274,10 +290,16 @@ public final class Commands {
             }
             rooms.add(match.roomId());
         }
-        if (!rooms.isEmpty()) {
-            CardContext.rememberMatches(reply.groupId(), reply.userId(),
-                    profile.playerId(), rooms);
-        }
+
+        String playerId = profile.playerId();
+        // 发图时拿到自身消息 id 并登记：用户引用这张图回序号时，
+        // 靠被引用消息的 id 反查是哪张卡片，从而支持「引用任意一张历史卡片」。
+        reply.imageWithId(Renderer.render(new PlayerCard(profile)), messageId -> {
+            BotCardRegistry.register(messageId, playerId, rooms);
+            if (!rooms.isEmpty()) {
+                CardContext.rememberMatches(reply.groupId(), reply.userId(), playerId, rooms);
+            }
+        });
     }
 
     /** 把数据年龄说成「N 天前」这类更好懂的说法。 */
